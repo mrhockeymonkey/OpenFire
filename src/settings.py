@@ -1,0 +1,23 @@
+import os
+
+#Genral
+FPS = 30
+WINDOWWIDTH = 640
+WINDOWHEIGHT = 480
+CAMERASLACK = 90
+
+#Colours
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# -------- OPTIONS -------- #
+#Map
+MAP = 'map1.tmx'
+
+#Player
+PLAYER_IMAGE = 'rock1.png'
+PLAYER_SPEED = 200
+
+#Shortcuts
+HALF_WINDOWWIDTH = WINDOWWIDTH / 2
+HALF_WINDOWHEIGHT = WINDOWHEIGHT / 2
