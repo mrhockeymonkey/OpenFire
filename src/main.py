@@ -32,13 +32,8 @@ class Game:
 
     def new(self):
 
-        #self.camera = {
-        #    'x': 0,
-        #    'y': 0
-        #}
-
         self.map = Map(self)
-        self.camera = Camera(self.map.width, self.map.height)
+        self.camera = Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
 
         # Define sprites
         self.all_sprites = pygame.sprite.Group()
@@ -89,9 +84,7 @@ class Game:
 
         self.all_sprites.update()
         self.camera.update(self.player)
-
-
-            
+  
 
     def draw(self):
 

@@ -30,10 +30,11 @@ As the camera moves other objects are shifted the same amount in the opposite di
 to create the feeling that the camera is scrolling through the map
 """
 class Camera:
-    def __init__(self, width, height):
+    def __init__(self, map, width, height):
         self.width = width
         self.height = height
         self.camera = pygame.Rect(0, 0, self.width, self.height)
+        self.map = map
 
     # given a rect simply shift it the amount the camera has "moved"
     def apply(self, rect):
@@ -42,13 +43,13 @@ class Camera:
     # updates the pos of the camera based on the target being tracked
     def update(self, target):
         # update the pos of the camera rect
-        x = -target.rect.x + int(WINDOWWIDTH / 2)
-        y = -target.rect.y + int(WINDOWHEIGHT / 2)
+        x = -target.rect.x + int(self.width / 2)
+        y = -target.rect.y + int(self.height / 2)
 
         # limit scrolling to map size
         x = min(0, x) # left
         y = min(0, y) # top
-        x = max(-(self.width - WINDOWWIDTH), x) # right
-        y = max(-(self.height - WINDOWHEIGHT), y) # bottom
+        x = max(-(self.map.width - self.width), x) # right
+        y = max(-(self.map.height - self.height), y) # bottom
 
         self.camera = pygame.Rect(x, y, self.width, self.height)
