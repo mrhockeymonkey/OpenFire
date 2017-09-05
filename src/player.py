@@ -94,18 +94,30 @@ class Mob(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         # mob image
-        self.image = self.game.mob_image
+        self.image_left = self.game.mob_image
+        self.image_right = pygame.transform.flip(self.image_left, True, False)
+        self.image = self.image_left
         self.rect = self.image.get_rect()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
         # mob position and velocity
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
-        self.rect.x = self.pos.x
-        self.rect.y = self.pos.y
+        self.rect.center = self.pos
         # mob hitbox
         self.hit_rect = MOB_HIT_RECT
         self.hit_rect.center = self.rect.center
+
+    def update(self):
+        self.direction = self.game.player.pos - self.pos # the vector from mob to player
+        if self.direction.x < 0:
+            self.image = self.image_left
+        elif self.direction.x > 0:
+            self.image = self.image_right
+        print(self.direction)
+        
+        # keep the image and hit box together always
+        self.rect.center = self.hit_rect.center
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
