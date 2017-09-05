@@ -23,7 +23,7 @@ PLAYER_HIT_RECT = pygame.Rect(0, 0, 32, 32)
 
 #Mob
 MOB_IMAGE = 'floating_eye.png'
-MOB_SPEED = 150
+MOB_SPEED = 100
 MOB_HIT_RECT = pygame.Rect(0, 0, 24, 24)
 
 #Shortcuts

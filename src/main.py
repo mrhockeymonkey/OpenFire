@@ -18,6 +18,7 @@ class Game:
         self.screen = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
+        self.draw_debug = True
 
         # loading files
         self.load_data()
@@ -41,7 +42,8 @@ class Game:
         self.wall_sprites = pygame.sprite.Group()
         self.mob_sprites = pygame.sprite.Group()
         self.player = Player(self, HALF_WINDOWWIDTH, HALF_WINDOWHEIGHT)
-        self.mob = Mob(self, 100, 50)
+        for i in range(0,10):
+            Mob(self, 100*i, 70*i)
 
         for i in range(0,4):
             Wall(self, 100 + i*64, HALF_WINDOWHEIGHT - 150)
@@ -66,26 +68,10 @@ class Game:
                 sys.exit()
 
     def update(self):
-        #Game loop - update
-        #Adjust camera
-        #Calculate the center pos for the player (the player object itself not the rect it is draw on)
-        #I.e. the players position in the world, NOT the position on the screen!! (3 hours wasted on that bug!)
-        #player_center_x = self.player.x + int(self.player.width /2)
-        #player_center_y = self.player.y + int(self.player.height / 2)
-        
-        #if the player is more than cameraslack pixels away from the midpoint then
-        #update value for camera to compensate and keep player at most cameraslack pixels from center
-        #if (self.camera['y'] + HALF_WINDOWHEIGHT) - player_center_y > CAMERASLACK: #Top edge
-        #    self.camera['y'] = player_center_y + CAMERASLACK - HALF_WINDOWHEIGHT
-        #elif (self.camera['x'] + HALF_WINDOWWIDTH) - player_center_x > CAMERASLACK: #Left edge
-        #    self.camera['x'] = player_center_x + CAMERASLACK - HALF_WINDOWWIDTH
-        #if player_center_y - (self.camera['y'] + HALF_WINDOWHEIGHT) > CAMERASLACK: #Bottom edge
-        #    self.camera['y'] = player_center_y - CAMERASLACK - HALF_WINDOWHEIGHT
-        #elif player_center_x - (self.camera['x'] + HALF_WINDOWWIDTH) > CAMERASLACK: #Right edge
-        #    self.camera['x'] = player_center_x - CAMERASLACK - HALF_WINDOWWIDTH
-
-
+        # call the update method on all sprites
         self.all_sprites.update()
+
+        # ???
         self.camera.update(self.player)
   
 
@@ -99,13 +85,15 @@ class Game:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         
         # debug 
-        pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
-        pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
-        pygame.draw.rect(self.screen, RED, self.player.hit_rect, 2)
-        for sprite in self.mob_sprites:
-            pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
-            pygame.draw.rect(self.screen, RED, sprite.hit_rect, 2)
-            pygame.draw.line(self.screen, WHITE, sprite.pos, self.player.pos)
+        if self.draw_debug == True:
+            pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
+            pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
+            pygame.draw.rect(self.screen, RED, self.player.hit_rect, 2)
+            for sprite in self.mob_sprites:
+                pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
+                pygame.draw.rect(self.screen, RED, sprite.hit_rect, 2)
+                pygame.draw.line(self.screen, RED, (sprite.pos), (sprite.pos + sprite.target )) # target line
+        
         # update the screen
         pygame.display.update()
 
