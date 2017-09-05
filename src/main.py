@@ -95,6 +95,8 @@ class Game:
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         
+            pygame.draw.rect(self.screen, (0,0,0), self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
+
         # update the screen
         pygame.display.update()
 
