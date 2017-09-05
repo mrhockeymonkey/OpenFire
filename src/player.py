@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+from random import uniform
+
 from settings import *
 
 vec = pygame.math.Vector2
@@ -53,9 +55,12 @@ class Player(pygame.sprite.Sprite):
         # player position and velocity
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
+        self.rot = 0
         # player hitbox
         self.hit_rect = PLAYER_HIT_RECT.copy() 
         self.hit_rect.center = self.rect.center
+        
+        self.last_shot = 0
 
     def _get_keys(self):
         self.vel = vec(0, 0)
@@ -72,6 +77,14 @@ class Player(pygame.sprite.Sprite):
         # to stop faster diagonal movement need to multipy by square root of 2
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= 0.7071
+
+        if keys[K_SPACE]:
+            now = pygame.time.get_ticks()
+            if now - self.last_shot > BULLET_RATE:
+                self.last_shot = now
+                dir = vec(1,0).rotate(-self.rot)
+                Bullet(self.game, self.pos, dir)
+                self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
 
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
@@ -114,7 +127,6 @@ class Mob(pygame.sprite.Sprite):
     def update(self):
         # update target (player.pos - mob.pos is the vector FROM mob->player)
         self.target = self.game.player.pos - self.pos # the vector from mob to player
-        print(self.target)
         
         # update image depending on location of target, i.e. always face the player. 
         if self.target.x < 0:
@@ -145,6 +157,32 @@ class Mob(pygame.sprite.Sprite):
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, game, pos, dir):
+        self.groups = game.all_sprites, game.bullet_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        # bullet image
+        self.image = self.game.bullet_image
+        self.rect = self.image.get_rect()
+        # bullet positional
+        self.pos = vec(pos) # this create a copy of the pos passed in
+        self.rect.center = self.pos
+        spread = uniform(-BULLET_SPREAD / 2, BULLET_SPREAD / 2) # randomize the path the bullet will take between BULLET_SPREAD
+        self.vel = dir.rotate(spread) * BULLET_SPEED
+        # bullet specific
+        self.spawn_time = pygame.time.get_ticks() # record at what time the bullet was spawned
+
+    def update(self):
+        self.pos += self.vel * self.game.dt
+        self.rect.center = self.pos
+
+        if pygame.sprite.spritecollideany(self, self.game.wall_sprites):
+            self.kill()
+        # check to see if bullet lifetime has passed
+        if pygame.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
+            self.kill()
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, game, x, y):

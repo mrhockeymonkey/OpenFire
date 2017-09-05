@@ -18,7 +18,7 @@ class Game:
         self.screen = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
-        self.draw_debug = True
+        self.draw_debug = False
 
         # loading files
         self.load_data()
@@ -29,6 +29,7 @@ class Game:
         self.map_dir = os.path.join(self.dir, '../map')
 
         self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE))
+        self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
         self.mob_image = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
         self.game_map = pytmx.load_pygame(os.path.join(self.map_dir, MAP))
 
@@ -41,6 +42,7 @@ class Game:
         self.all_sprites = pygame.sprite.Group()
         self.wall_sprites = pygame.sprite.Group()
         self.mob_sprites = pygame.sprite.Group()
+        self.bullet_sprites = pygame.sprite.Group()
         self.player = Player(self, HALF_WINDOWWIDTH, HALF_WINDOWHEIGHT)
         for i in range(0,10):
             Mob(self, 100*i, 70*i)
@@ -73,6 +75,11 @@ class Game:
 
         # ???
         self.camera.update(self.player)
+
+        # bullets hit mobs
+        hits = pygame.sprite.groupcollide(self.mob_sprites, self.bullet_sprites, False, True)
+        for hit in hits:
+            hit.kill()
   
 
     def draw(self):
