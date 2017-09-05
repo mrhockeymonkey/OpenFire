@@ -7,7 +7,7 @@ from pygame.locals import *
 from pytmx import load_pygame
 
 from settings import *
-from player import Player, Wall
+from player import Player, Wall, Mob
 from tilemap import Map, Camera
 
 class Game:
@@ -28,6 +28,7 @@ class Game:
         self.map_dir = os.path.join(self.dir, '../map')
 
         self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE))
+        self.mob_image = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
         self.game_map = pytmx.load_pygame(os.path.join(self.map_dir, MAP))
 
     def new(self):
@@ -38,8 +39,10 @@ class Game:
         # Define sprites
         self.all_sprites = pygame.sprite.Group()
         self.wall_sprites = pygame.sprite.Group()
+        self.mob_sprites = pygame.sprite.Group()
         self.player = Player(self, HALF_WINDOWWIDTH, HALF_WINDOWHEIGHT)
-        
+        self.mob = Mob(self, 100, 50)
+
         for i in range(0,4):
             Wall(self, 100 + i*64, HALF_WINDOWHEIGHT - 150)
 
@@ -95,6 +98,14 @@ class Game:
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
         
+        # debug 
+        pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
+        pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
+        pygame.draw.rect(self.screen, RED, self.player.hit_rect, 2)
+        for sprite in self.mob_sprites:
+            pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
+            pygame.draw.rect(self.screen, RED, sprite.hit_rect, 2)
+            pygame.draw.line(self.screen, WHITE, sprite.pos, self.player.pos)
         # update the screen
         pygame.display.update()
 

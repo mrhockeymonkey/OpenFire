@@ -2,6 +2,13 @@ import pygame
 from pygame.locals import *
 from settings import *
 
+vec = pygame.math.Vector2
+
+# used to determine when a hit_rect has collided with another sprite
+# this is used as a callback function in pygame.sprite.pritecollide()
+def collide_hit_rect(sprite1, sprite2):
+    return sprite1.hit_rect.colliderect(sprite2.rect)
+
 class Player(pygame.sprite.Sprite):
     """
     This class represents the main player.
@@ -12,71 +19,105 @@ class Player(pygame.sprite.Sprite):
         # initialize sprite class, adding sprite to groups immediately
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
-        
-        # setup some properties
         self.game = game
+        # player image
         self.image = self.game.player_image
         self.rect = self.image.get_rect()
-        self.x = x
-        self.y = y
-        self.vx, self.vy = 0, 0
         self.width = self.image.get_width()
         self.height = self.image.get_height()
+        # player position and velocity
+        self.pos = vec(x, y)
+        self.vel = vec(0, 0)
+        # player hitbox
+        self.hit_rect = PLAYER_HIT_RECT
+        self.hit_rect.center = self.rect.center
 
     def _get_keys(self):
-        self.vx, self.vy = 0, 0
+        self.vel = vec(0, 0)
+
         keys = pygame.key.get_pressed()
         if keys[K_LEFT] or keys[K_a]:
-            self.vx = -PLAYER_SPEED
+            self.vel.x = -PLAYER_SPEED
         if keys[K_RIGHT] or keys[K_d]:
-            self.vx = PLAYER_SPEED
+            self.vel.x = PLAYER_SPEED
         if keys[K_UP] or keys[K_w]:
-            self.vy = -PLAYER_SPEED
+            self.vel.y = -PLAYER_SPEED
         if keys[K_DOWN] or keys[K_s]:
-            self.vy = PLAYER_SPEED
+            self.vel.y = PLAYER_SPEED
         # to stop faster diagonal movement need to multipy by square root of 2
-        if self.vx != 0 and self.y != 0:
-            self.vx *= 0.7071
-            self.vy *= 0.7071
-
+        if self.vel.x != 0 and self.vel.y != 0:
+            self.vel *= 0.7071
 
     def _collide_with_wall(self, direction):
         if direction == 'x':
             # detect is there is any pixel collision between sprite rects
-            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False)
+            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False, collide_hit_rect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
             if hits:
-                if self.vx > 0: # case when moving to the right
-                    self.x = hits[0].rect.left - self.rect.width
-                if self.vx < 0: # case when moving to the left
-                    self.x = hits[0].rect.right
+                if self.vel.x > 0: # case when moving to the right
+                    self.pos.x = hits[0].rect.left - self.hit_rect.width
+                if self.vel.x < 0: # case when moving to the left
+                    self.pos.x = hits[0].rect.right
                 # cancel out velocity and update the player rect
-                self.vx = 0
-                self.rect.x = self.x
+                self.vel.x = 0
+                self.hit_rect.x = self.pos.x
         if direction == 'y':
-            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False)
+            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False, collide_hit_rect)
             if hits:
-                if self.vy > 0: # case when moving down
-                    self.y = hits[0].rect.top - self.rect.height
-                if self.vy < 0: # case when moving up
-                    self.y = hits[0].rect.bottom
+                if self.vel.y > 0: # case when moving down
+                    self.pos.y = hits[0].rect.top - self.hit_rect.height
+                if self.vel.y < 0: # case when moving up
+                    self.pos.y = hits[0].rect.bottom
                 # cancel out velocity and update the player rect
-                self.vy = 0
-                self.rect.y = self.y
+                self.vel.y = 0
+                self.hit_rect.y = self.pos.y
 
-    
+    # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
         # first we check to see what keys are pressed to decide if movement, image or animation is needed
         self._get_keys()
 
-        # update sprite pos (distance = velocity * time)
-        self.x += self.vx * self.game.dt
-        self.y += self.vy * self.game.dt
+        # update sprite pos (distance = velocity * time), this gives smooth movement independant of frame rate
+        self.pos += self.vel * self.game.dt
 
         # collision detection
-        self.rect.x = self.x
+        self.hit_rect.x = self.pos.x
         self._collide_with_wall('x')
-        self.rect.y = self.y
+        self.hit_rect.y = self.pos.y
         self._collide_with_wall('y')
+
+        # keep the image and hit box together always
+        self.rect.center = self.hit_rect.center
+
+class Mob(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.mob_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        # mob image
+        self.image_left = self.game.mob_image
+        self.image_right = pygame.transform.flip(self.image_left, True, False)
+        self.image = self.image_left
+        self.rect = self.image.get_rect()
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        # mob position and velocity
+        self.pos = vec(x, y)
+        self.vel = vec(0, 0)
+        self.rect.center = self.pos
+        # mob hitbox
+        self.hit_rect = MOB_HIT_RECT
+        self.hit_rect.center = self.rect.center
+
+    def update(self):
+        self.direction = self.game.player.pos - self.pos # the vector from mob to player
+        if self.direction.x < 0:
+            self.image = self.image_left
+        elif self.direction.x > 0:
+            self.image = self.image_right
+        print(self.direction)
+        
+        # keep the image and hit box together always
+        self.rect.center = self.hit_rect.center
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -91,20 +132,3 @@ class Wall(pygame.sprite.Sprite):
         self.rect.y = self.y
 
 
-#class Wall(pygame.sprite.Sprite):
-#    """
-#    This class repesents walls/untraversable terrain
-#    """
-#
-#    def __init__(self, game, x, y):
-#        self.groups = game.all_sprites, game.wall_sprites
-#        pygame.sprite.Sprite.__init__(self, self.groups)
-#
-#        self.image = game.player_image
-#        self.x = x
-#        self.y = y
-#        self.width = self.image.get_width()
-#        self.height = self.image.get_height()
-#
-#    def update(self, dt):
-#        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
