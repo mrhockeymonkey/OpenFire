@@ -9,10 +9,35 @@ vec = pygame.math.Vector2
 def collide_hit_rect(sprite1, sprite2):
     return sprite1.hit_rect.colliderect(sprite2.rect)
 
+def collide_wall(sprite, group, direction):
+    if direction == 'x':
+        # detect is there is any pixel collision between sprite rects
+        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
+        if hits:
+            if sprite.vel.x > 0: # case when moving to the right
+                sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width
+            if sprite.vel.x < 0: # case when moving to the left
+                sprite.pos.x = hits[0].rect.right
+            # cancel out velocity and update the player rect
+            sprite.vel.x = 0
+            sprite.hit_rect.x = sprite.pos.x
+    if direction == 'y':
+        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
+        if hits:
+            if sprite.vel.y > 0: # case when moving down
+                sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height
+            if sprite.vel.y < 0: # case when moving up
+                sprite.pos.y = hits[0].rect.bottom
+            # cancel out velocity and update the player rect
+            sprite.vel.y = 0
+            sprite.hit_rect.y = sprite.pos.y
+
 class Player(pygame.sprite.Sprite):
     """
-    This class represents the main player.
-    It derives from the "Sprite" class in Pygame.
+    This class represents the main player. It derives from the "Sprite" class in Pygame.
+
+    A player object has a rect for the player image and also a rect for the player hitbox
+    The hitbox is used to determine collisions as solves some problems with using the image rect for collision detection. 
     """
 
     def __init__(self, game, x, y):
@@ -29,7 +54,7 @@ class Player(pygame.sprite.Sprite):
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
         # player hitbox
-        self.hit_rect = PLAYER_HIT_RECT
+        self.hit_rect = PLAYER_HIT_RECT.copy() 
         self.hit_rect.center = self.rect.center
 
     def _get_keys(self):
@@ -48,42 +73,19 @@ class Player(pygame.sprite.Sprite):
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= 0.7071
 
-    def _collide_with_wall(self, direction):
-        if direction == 'x':
-            # detect is there is any pixel collision between sprite rects
-            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False, collide_hit_rect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
-            if hits:
-                if self.vel.x > 0: # case when moving to the right
-                    self.pos.x = hits[0].rect.left - self.hit_rect.width
-                if self.vel.x < 0: # case when moving to the left
-                    self.pos.x = hits[0].rect.right
-                # cancel out velocity and update the player rect
-                self.vel.x = 0
-                self.hit_rect.x = self.pos.x
-        if direction == 'y':
-            hits = pygame.sprite.spritecollide(self, self.game.wall_sprites, False, collide_hit_rect)
-            if hits:
-                if self.vel.y > 0: # case when moving down
-                    self.pos.y = hits[0].rect.top - self.hit_rect.height
-                if self.vel.y < 0: # case when moving up
-                    self.pos.y = hits[0].rect.bottom
-                # cancel out velocity and update the player rect
-                self.vel.y = 0
-                self.hit_rect.y = self.pos.y
-
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
-        # first we check to see what keys are pressed to decide if movement, image or animation is needed
+        # get keys to determine velocity
         self._get_keys()
 
         # update sprite pos (distance = velocity * time), this gives smooth movement independant of frame rate
         self.pos += self.vel * self.game.dt
 
-        # collision detection
+        # collision detection, we update the hit_rect and test for collisions
         self.hit_rect.x = self.pos.x
-        self._collide_with_wall('x')
+        collide_wall(self, self.game.wall_sprites, 'x')
         self.hit_rect.y = self.pos.y
-        self._collide_with_wall('y')
+        collide_wall(self, self.game.wall_sprites, 'y')
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
@@ -104,18 +106,43 @@ class Mob(pygame.sprite.Sprite):
         self.pos = vec(x, y)
         self.vel = vec(0, 0)
         self.rect.center = self.pos
+        self.rot = 0
         # mob hitbox
-        self.hit_rect = MOB_HIT_RECT
+        self.hit_rect = MOB_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
 
     def update(self):
-        self.direction = self.game.player.pos - self.pos # the vector from mob to player
-        if self.direction.x < 0:
-            self.image = self.image_left
-        elif self.direction.x > 0:
-            self.image = self.image_right
-        print(self.direction)
+        # update target (player.pos - mob.pos is the vector FROM mob->player)
+        self.target = self.game.player.pos - self.pos # the vector from mob to player
+        print(self.target)
         
+        # update image depending on location of target, i.e. always face the player. 
+        if self.target.x < 0:
+            self.image = self.image_left
+        elif self.target.x > 0:
+            self.image = self.image_right
+
+        # calcukate the rotation from x axis to player object
+        # angle_to get the angle between that vectore and the x axis
+        self.rot = self.target.angle_to(vec(1,0))
+
+        # the acceleration is always in the direction of the player
+        self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
+        self.acc += self.vel * -1 # friction
+        
+        # Laws of motion: a = v/t or v = a*t
+        self.vel += self.acc * self.game.dt
+        
+        # ??? d = v*t
+        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
+        #sself.rect.center = self.pos
+
+        # collision detection
+        self.hit_rect.x = self.pos.x
+        collide_wall(self, self.game.wall_sprites, 'x')
+        self.hit_rect.y = self.pos.y
+        collide_wall(self, self.game.wall_sprites, 'y')
+
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
 
