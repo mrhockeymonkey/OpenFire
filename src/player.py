@@ -16,9 +16,9 @@ def collide_wall(sprite, group, direction):
         # detect is there is any pixel collision between sprite rects
         hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
         if hits:
-            if sprite.vel.x > 0: # case when moving to the right
+            if hits[0].rect.centerx > sprite.hit_rect.centerx: #i.e. if player center > wall center then player is on RHS
                 sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width
-            if sprite.vel.x < 0: # case when moving to the left
+            if hits[0].rect.centerx < sprite.hit_rect.centerx: # player is LHS
                 sprite.pos.x = hits[0].rect.right
             # cancel out velocity and update the player rect
             sprite.vel.x = 0
@@ -26,9 +26,9 @@ def collide_wall(sprite, group, direction):
     if direction == 'y':
         hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
         if hits:
-            if sprite.vel.y > 0: # case when moving down
+            if hits[0].rect.centery > sprite.hit_rect.centery: # player below
                 sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height
-            if sprite.vel.y < 0: # case when moving up
+            if hits[0].rect.centery < sprite.hit_rect.centery: # player above
                 sprite.pos.y = hits[0].rect.bottom
             # cancel out velocity and update the player rect
             sprite.vel.y = 0
@@ -61,6 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.hit_rect.center = self.rect.center
         
         self.last_shot = 0
+        self.health = PLAYER_HEALTH
 
     def _get_keys(self):
         self.vel = vec(0, 0)
@@ -84,7 +85,9 @@ class Player(pygame.sprite.Sprite):
                 self.last_shot = now
                 dir = vec(1,0).rotate(-self.rot)
                 Bullet(self.game, self.pos, dir)
-                self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
+                
+                #kick back
+                #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
 
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
@@ -123,6 +126,13 @@ class Mob(pygame.sprite.Sprite):
         # mob hitbox
         self.hit_rect = MOB_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
+        self.health = MOB_HEALTH
+
+    def draw_health(self):
+        width = int(self.rect.width  * self.health / 100)
+        health_bar = pygame.Rect(0, 0, width, 20)
+        pygame.draw.rect(self.game.screen, RED, health_bar)
+
 
     def update(self):
         # update target (player.pos - mob.pos is the vector FROM mob->player)
@@ -158,6 +168,9 @@ class Mob(pygame.sprite.Sprite):
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
 
+        if self.health <= 0:
+            self.kill()
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, game, pos, dir):
         self.groups = game.all_sprites, game.bullet_sprites
@@ -180,6 +193,7 @@ class Bullet(pygame.sprite.Sprite):
 
         if pygame.sprite.spritecollideany(self, self.game.wall_sprites):
             self.kill()
+
         # check to see if bullet lifetime has passed
         if pygame.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
             self.kill()
