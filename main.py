@@ -3,7 +3,7 @@ import sys
 import os
 from pygame.locals import *
 from settings import *
-from player import Player, Wall, Mob, collide_hit_rect
+from player import Player, Obstacle, Mob, collide_hit_rect
 from tilemap import TiledMap, Camera
 
 # alias
@@ -44,10 +44,19 @@ class Game:
         self.load_data()
 
     def load_data(self):
-        self.dir = os.path.dirname(__file__)
-        self.img_dir = os.path.join(self.dir, '../img')
-        self.map_dir = os.path.join(self.dir, '../map')
+        
+        # check to see if running from source or bundle
+        if getattr(sys, 'frozen', False):
+            print('running from bundle')
+            self.dir = sys._MEIPASS
+        else:
+            print('running from source')
+            self.dir = os.path.dirname(__file__)
+        
+        self.img_dir = os.path.join(self.dir, 'img')
+        self.map_dir = os.path.join(self.dir, 'map')
 
+        print(os.path.join(self.img_dir, PLAYER_IMAGE))
         self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE))
         self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
         self.mob_image = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
@@ -67,12 +76,14 @@ class Game:
         self.mob_sprites = pygame.sprite.Group()
         self.bullet_sprites = pygame.sprite.Group()
 
-        self.player = Player(self, WINDOWWIDTH / 2, WINDOWHEIGHT / 2)
-        for i in range(0,1):
-            Mob(self, 100*i, 70*i)
-
-        for i in range(0,4):
-            Wall(self, 100 + i*64, WINDOWHEIGHT / 2 - 150)
+        for tile_object in self.map.tmxdata.objects:
+            if tile_object.name == 'player':
+                self.player = Player(self, tile_object.x , tile_object.y)
+            if tile_object.name == 'wall':
+                Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+            if tile_object.name == 'mob':
+                Mob(self, tile_object.x, tile_object.y)
+            
 
         self.run()
 
@@ -100,6 +111,7 @@ class Game:
         # ???
         self.camera.update(self.player)
 
+        # should this move to the mob class????
         # mobs hit player
         hits = pygame.sprite.spritecollide(self.player, self.mob_sprites, False, collide_hit_rect)
         for hit in hits:
@@ -135,12 +147,15 @@ class Game:
         if self.draw_debug == True:
             pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
             pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
-            pygame.draw.rect(self.screen, RED, self.player.hit_rect, 2)
+            pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
             for sprite in self.mob_sprites:
                 pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
-                pygame.draw.rect(self.screen, RED, sprite.hit_rect, 2)
+                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
                 pygame.draw.line(self.screen, RED, (sprite.pos), (sprite.pos + sprite.target )) # target line
-        
+            for sprite in self.wall_sprites:
+                pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
+            for sprite in self.bullet_sprites:
+                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
         # HUD
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
 

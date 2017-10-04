@@ -7,7 +7,7 @@
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/src/main.py",
+            "program": "${workspaceRoot}/main.py",
             "cwd": "",
             "console": "externalTerminal",
             "env": {},

@@ -198,16 +198,28 @@ class Bullet(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
             self.kill()
 
-class Wall(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.wall_sprites
+#class Wall(pygame.sprite.Sprite):
+#    def __init__(self, game, x, y):
+#        self.groups = game.all_sprites, game.wall_sprites
+#        pygame.sprite.Sprite.__init__(self, self.groups)
+#        self.game = game
+#        self.image = self.game.player_image
+#        self.rect = self.image.get_rect()
+#        self.x = x
+#        self.y = y
+#        self.rect.x = self.x
+#        self.rect.y = self.y
+
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, w, h):
+        self.groups = game.wall_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = self.game.player_image
-        self.rect = self.image.get_rect()
+        self.rect = pygame.Rect(x, y, w, h)
         self.x = x
         self.y = y
-        self.rect.x = self.x
-        self.rect.y = self.y
+        #self.rect.x = self.x
+        #self.rect.y = self.y
 
 
