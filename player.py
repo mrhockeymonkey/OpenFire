@@ -50,6 +50,7 @@ class Player(pygame.sprite.Sprite):
         # player image
         self.image = self.game.player_image
         self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
         self.width = self.image.get_width()
         self.height = self.image.get_height()
         # player position and velocity
@@ -116,6 +117,7 @@ class Mob(pygame.sprite.Sprite):
         self.image_right = pygame.transform.flip(self.image_left, True, False)
         self.image = self.image_left
         self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
         self.width = self.image.get_width()
         self.height = self.image.get_height()
         # mob position and velocity
@@ -133,6 +135,13 @@ class Mob(pygame.sprite.Sprite):
         health_bar = pygame.Rect(0, 0, width, 20)
         pygame.draw.rect(self.game.screen, RED, health_bar)
 
+    def avoid_mobs(self):
+        for mob in self.game.mob_sprites:
+            if mob != self:
+                # if the vector from other mob to self is within the avoid radius, update acc
+                dist = self.pos - mob.pos
+                if 0 < dist.length() < MOB_AVOID_RADIUS: 
+                    self.acc += dist.normalize() #normalize = size of 1 so we just update direction
 
     def update(self):
         # update target (player.pos - mob.pos is the vector FROM mob->player)
@@ -149,7 +158,9 @@ class Mob(pygame.sprite.Sprite):
         self.rot = self.target.angle_to(vec(1,0))
 
         # the acceleration is always in the direction of the player
-        self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
+        self.acc = vec(1, 0).rotate(-self.rot)
+        self.avoid_mobs()
+        self.acc.scale_to_length(MOB_SPEED)
         self.acc += self.vel * -1 # friction
         
         # Laws of motion: a = v/t or v = a*t

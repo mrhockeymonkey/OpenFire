@@ -33,6 +33,7 @@ MOB_SPEED = 100
 MOB_HIT_RECT = pygame.Rect(0, 0, 24, 24)
 MOB_DAMAGE = 2
 MOB_KNOCKBACK = 20
+MOB_AVOID_RADIUS = 50
 
 # Gun
 BULLET_IMG = 'meteorGrey_tiny1.png'

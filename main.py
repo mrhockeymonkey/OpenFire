@@ -151,7 +151,7 @@ class Game:
             for sprite in self.mob_sprites:
                 pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
-                pygame.draw.line(self.screen, RED, (sprite.pos), (sprite.pos + sprite.target )) # target line
+                #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
             for sprite in self.wall_sprites:
                 pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
             for sprite in self.bullet_sprites:
