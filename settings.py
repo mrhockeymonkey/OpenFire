@@ -44,3 +44,16 @@ BULLET_KICKBACK = 50
 BULLET_SPREAD = 5 # the spread of bullets in degrees 
 BULLET_DAMAGE = 10
 
+# Effects
+MUZZLE_FLASHES = ['laserRed08.png', 'laserRed09.png', 'laserRed10.png', 'laserRed11.png']
+
+# Layers
+WALL_LAYER = 1
+ITEMS_LAYER = 1
+PLAYER_LAYER = 2
+MOB_LAYER = 2
+BULLET_LAYER = 3
+EFFECT_LAYER = 4
+
+# Items
+ITEM_IMAGES = {'health': 'genericItem_color_102.png'}

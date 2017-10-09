@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from random import uniform
+from random import uniform, randint, choice
 
 from settings import *
 
@@ -44,6 +44,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, game, x, y):
         # initialize sprite class, adding sprite to groups immediately
+        self._layer = PLAYER_LAYER 
         self.groups = game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -90,6 +91,9 @@ class Player(pygame.sprite.Sprite):
                 #kick back
                 #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
 
+                #muzzle flash
+                MuzzleFlash(self.game, self.pos)
+
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
         # get keys to determine velocity
@@ -109,6 +113,7 @@ class Player(pygame.sprite.Sprite):
 
 class Mob(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
+        self._layer = MOB_LAYER
         self.groups = game.all_sprites, game.mob_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -184,6 +189,7 @@ class Mob(pygame.sprite.Sprite):
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, game, pos, dir):
+        self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.bullet_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -223,6 +229,7 @@ class Bullet(pygame.sprite.Sprite):
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, game, x, y, w, h):
+        self._layer = WALL_LAYER
         self.groups = game.wall_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -234,3 +241,31 @@ class Obstacle(pygame.sprite.Sprite):
         #self.rect.y = self.y
 
 
+class MuzzleFlash(pygame.sprite.Sprite):
+    def __init__(self, game, pos):
+        self._layer = EFFECT_LAYER
+        self.groups =game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        size = randint(20, 50)
+        self.image = pygame.transform.scale(choice(game.gun_flashes), (size,size))
+        self.rect = self.image.get_rect()
+        self.pos = pos
+        self.rect.center = pos
+        self.spawn_time = pygame.time.get_ticks()
+
+    def update(self):
+        if pygame.time.get_ticks() - self.spawn_time > 40:
+            self.kill()
+
+class Item(pygame.sprite.Sprite):
+    def __init__(self, game, pos, type):
+        self._layer = ITEMS_LAYER
+        self.groups = game.all_sprites, game.item_sprites
+        pygame.sprite.Sprite.__init__(self,self.groups)
+        self.game = game
+        self.image = game.item_images[type]
+        self.rect = self.image.get_rect()
+        self.type = type
+        self.pos = pos
+        self.rect.center = pos

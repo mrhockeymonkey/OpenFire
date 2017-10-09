@@ -3,7 +3,7 @@ import sys
 import os
 from pygame.locals import *
 from settings import *
-from player import Player, Obstacle, Mob, collide_hit_rect
+from player import Player, Obstacle, Mob, collide_hit_rect, Item
 from tilemap import TiledMap, Camera
 
 # alias
@@ -65,24 +65,36 @@ class Game:
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
 
+        self.gun_flashes = []
+        for img in MUZZLE_FLASHES:
+            self.gun_flashes.append(pygame.image.load(os.path.join(self.img_dir, img))) #convert alpha??
+
+        self.item_images = {}
+        for item in ITEM_IMAGES:
+            self.item_images[item] = pygame.image.load(os.path.join(self.img_dir, ITEM_IMAGES[item]))
+
     def new(self):
 
         #self.map = Map(self)
         self.camera = Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
 
         # Define sprites
-        self.all_sprites = pygame.sprite.Group()
+        self.all_sprites = pygame.sprite.LayeredUpdates()
         self.wall_sprites = pygame.sprite.Group()
         self.mob_sprites = pygame.sprite.Group()
         self.bullet_sprites = pygame.sprite.Group()
+        self.item_sprites = pygame.sprite.Group()
 
         for tile_object in self.map.tmxdata.objects:
+            # could calculate center here to be cleaner
             if tile_object.name == 'player':
                 self.player = Player(self, tile_object.x , tile_object.y)
             if tile_object.name == 'wall':
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'mob':
                 Mob(self, tile_object.x, tile_object.y)
+            if tile_object.name in ['health']:
+                Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
             
 
         self.run()
@@ -110,6 +122,13 @@ class Game:
 
         # ???
         self.camera.update(self.player)
+
+        # player hits items
+        hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False)
+        for hit in hits:
+            if hit.type == 'health' and self.player.health < PLAYER_HEALTH:
+                hit.kill()
+                self.player.health = PLAYER_HEALTH
 
         # should this move to the mob class????
         # mobs hit player
