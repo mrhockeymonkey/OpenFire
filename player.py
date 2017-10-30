@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 from random import uniform, randint, choice
-
+import pytweening as tween
 from settings import *
 
 vec = pygame.math.Vector2
@@ -65,6 +65,8 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = 0
         self.health = PLAYER_HEALTH
 
+        self.weapon = 'shotgun'
+
     def _get_keys(self):
         self.vel = vec(0, 0)
 
@@ -82,17 +84,24 @@ class Player(pygame.sprite.Sprite):
             self.vel *= 0.7071
 
         if keys[K_SPACE]:
-            now = pygame.time.get_ticks()
-            if now - self.last_shot > BULLET_RATE:
-                self.last_shot = now
-                dir = vec(1,0).rotate(-self.rot)
-                Bullet(self.game, self.pos, dir)
-                
-                #kick back
-                #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
+            self.shoot()
 
-                #muzzle flash
-                MuzzleFlash(self.game, self.pos)
+    def shoot(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > WEAPONS[self.weapon]['rate']:
+            self.last_shot = now
+            dir = vec(1,0).rotate(-self.rot)
+            
+            for i in range(WEAPONS[self.weapon]['count']):
+                Bullet(self.game, self.pos, dir)
+                snd = choice(self.game.weapon_sounds[self.weapon])
+                if snd.get_num_channels() > 2:
+                    snd.stop()
+                snd.play()
+            #kick back
+            #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
+            #muzzle flash
+            MuzzleFlash(self.game, self.pos)
 
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
@@ -118,9 +127,9 @@ class Mob(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         # mob image
-        self.image_left = self.game.mob_image
-        self.image_right = pygame.transform.flip(self.image_left, True, False)
-        self.image = self.image_left
+        #self.image_left = 
+        #self.image_right = pygame.transform.flip(self.image_left, True, False)
+        self.image = self.game.mob_image.copy()
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.width = self.image.get_width()
@@ -134,11 +143,13 @@ class Mob(pygame.sprite.Sprite):
         self.hit_rect = MOB_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
         self.health = MOB_HEALTH
+        self.target = self.game.player
 
     def draw_health(self):
-        width = int(self.rect.width  * self.health / 100)
-        health_bar = pygame.Rect(0, 0, width, 20)
-        pygame.draw.rect(self.game.screen, RED, health_bar)
+        width = int(self.rect.width  * self.health / MOB_HEALTH)
+        health_bar = pygame.Rect(0, 0, width, 7)
+        pygame.draw.rect(self.image, RED, health_bar)
+        #pygame.draw.rect(self.game.screen, RED, health_bar)
 
     def avoid_mobs(self):
         for mob in self.game.mob_sprites:
@@ -149,31 +160,33 @@ class Mob(pygame.sprite.Sprite):
                     self.acc += dist.normalize() #normalize = size of 1 so we just update direction
 
     def update(self):
-        # update target (player.pos - mob.pos is the vector FROM mob->player)
-        self.target = self.game.player.pos - self.pos # the vector from mob to player
-        
-        # update image depending on location of target, i.e. always face the player. 
-        if self.target.x < 0:
-            self.image = self.image_left
-        elif self.target.x > 0:
-            self.image = self.image_right
+        target_distance = self.game.player.pos - self.pos
+        if target_distance.length_squared() < MOB_DETECT_RADIUS**2: #why?
+            # update target (player.pos - mob.pos is the vector FROM mob->player)
+            #self.target = self.game.player.pos - self.pos # the vector from mob to player
+            
+            # update image depending on location of target, i.e. always face the player. 
+            #if self.target.x < 0:
+            #    self.image = self.image_left
+            #elif self.target.x > 0:
+            #    self.image = self.image_right
 
-        # calcukate the rotation from x axis to player object
-        # angle_to get the angle between that vectore and the x axis
-        self.rot = self.target.angle_to(vec(1,0))
+            # calcukate the rotation from x axis to player object
+            # angle_to get the angle between that vectore and the x axis
+            self.rot = target_distance.angle_to(vec(1,0))
 
-        # the acceleration is always in the direction of the player
-        self.acc = vec(1, 0).rotate(-self.rot)
-        self.avoid_mobs()
-        self.acc.scale_to_length(MOB_SPEED)
-        self.acc += self.vel * -1 # friction
-        
-        # Laws of motion: a = v/t or v = a*t
-        self.vel += self.acc * self.game.dt
-        
-        # ??? d = v*t
-        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
-        #sself.rect.center = self.pos
+            # the acceleration is always in the direction of the player
+            self.acc = vec(1, 0).rotate(-self.rot)
+            self.avoid_mobs()
+            self.acc.scale_to_length(MOB_SPEED)
+            self.acc += self.vel * -1 # friction
+            
+            # Laws of motion: a = v/t or v = a*t
+            self.vel += self.acc * self.game.dt
+            
+            # ??? d = v*t
+            self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
+            #sself.rect.center = self.pos
 
         # collision detection
         self.hit_rect.x = self.pos.x
@@ -185,7 +198,10 @@ class Mob(pygame.sprite.Sprite):
         self.rect.center = self.hit_rect.center
 
         if self.health <= 0:
+            choice(self.game.mob_hit_sounds).play()
             self.kill()
+            self.game.map_img.blit(self.game.splat_image, self.pos)
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, game, pos, dir):
@@ -199,8 +215,8 @@ class Bullet(pygame.sprite.Sprite):
         # bullet positional
         self.pos = vec(pos) # this create a copy of the pos passed in
         self.rect.center = self.pos
-        spread = uniform(-BULLET_SPREAD / 2, BULLET_SPREAD / 2) # randomize the path the bullet will take between BULLET_SPREAD
-        self.vel = dir.rotate(spread) * BULLET_SPEED
+        spread = uniform(-WEAPONS[self.game.player.weapon]['spread'], WEAPONS[self.game.player.weapon]['spread']) # randomize the path the bullet will take between BULLET_SPREAD
+        self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed']
         # bullet specific
         self.spawn_time = pygame.time.get_ticks() # record at what time the bullet was spawned
 
@@ -212,7 +228,7 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
         # check to see if bullet lifetime has passed
-        if pygame.time.get_ticks() - self.spawn_time > BULLET_LIFETIME:
+        if pygame.time.get_ticks() - self.spawn_time > WEAPONS[self.game.player.weapon]['lifetime']:
             self.kill()
 
 #class Wall(pygame.sprite.Sprite):
@@ -269,3 +285,38 @@ class Item(pygame.sprite.Sprite):
         self.type = type
         self.pos = pos
         self.rect.center = pos
+        self.animation = 'rise'
+        self.step = 0
+
+    def update(self):
+        # bobbing motion - this is split into two phases: rise & bounce
+        if self.animation == 'rise':
+            # the rise is an exponential in
+            offset = (ITEM_BOB_RANGE * tween.easeInExpo(self.step / ITEM_BOB_RANGE))
+            direction = 1
+            self.rect.centery = self.pos.y - offset * direction
+            self.step += ITEM_BOB_SPEED
+            if self.step > ITEM_BOB_RANGE:
+                self.step = 0
+                self.animation = 'bounce'
+
+        if self.animation == 'bounce':
+            # 
+            offset = ITEM_BOB_RANGE * tween.easeOutBounce(self.step / ITEM_BOB_RANGE)
+            direction = 1
+            self.rect.centery = self.pos.y - ITEM_BOB_RANGE + offset
+            self.step += ITEM_BOB_SPEED
+            if self.step > ITEM_BOB_RANGE:
+                self.step = 0
+                self.animation = 'rise'
+
+
+         # how far are we through thr bob range as a percentage. the tween will be a value between 0 and 1 so - 0.5 to center it
+         #offset = ITEM_BOB_RANGE * (self.tween(self.step / ITEM_BOB_RANGE))
+         #self.rect.centery = self.pos.y + offset
+         ##self.rect.centery = self.pos.y + offset * self.dir
+         #self.step += ITEM_BOB_SPEED
+         ## if the step is past the range we start going the other way
+         #if self.step > ITEM_BOB_RANGE:
+         #    self.step = 0
+             #self.dir *= -1

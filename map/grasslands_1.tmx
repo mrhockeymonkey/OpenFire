@@ -39,7 +39,7 @@
  </layer>
  <objectgroup name="Objects">
   <object id="2" name="wall" x="960" y="320" width="128" height="128"/>
-  <object id="3" name="player" x="272" y="208" width="32" height="32"/>
+  <object id="3" name="player" x="1248" y="192" width="32" height="32"/>
   <object id="4" name="wall" x="1024" y="448" width="64" height="192"/>
   <object id="5" name="wall" x="1088" y="576" width="192" height="64"/>
   <object id="6" name="wall" x="1216" y="448" width="64" height="128"/>
