@@ -3,6 +3,7 @@ from pygame.locals import *
 from random import uniform, randint, choice
 import pytweening as tween
 from settings import *
+from itertools import chain
 
 vec = pygame.math.Vector2
 
@@ -65,7 +66,8 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = 0
         self.health = PLAYER_HEALTH
 
-        self.weapon = 'shotgun'
+        self.weapon = 'pistol'
+        self.damaged = False
 
     def _get_keys(self):
         self.vel = vec(0, 0)
@@ -86,6 +88,10 @@ class Player(pygame.sprite.Sprite):
         if keys[K_SPACE]:
             self.shoot()
 
+    def hit(self):
+        self.damaged = True
+        self.damage_alpha = chain(DAMAGE_ALPHA * 4)
+
     def shoot(self):
         now = pygame.time.get_ticks()
         if now - self.last_shot > WEAPONS[self.weapon]['rate']:
@@ -93,7 +99,7 @@ class Player(pygame.sprite.Sprite):
             dir = vec(1,0).rotate(-self.rot)
             
             for i in range(WEAPONS[self.weapon]['count']):
-                Bullet(self.game, self.pos, dir)
+                Bullet(self.game, self.pos, dir, WEAPONS[self.weapon]['damage'])
                 snd = choice(self.game.weapon_sounds[self.weapon])
                 if snd.get_num_channels() > 2:
                     snd.stop()
@@ -110,6 +116,14 @@ class Player(pygame.sprite.Sprite):
 
         # update sprite pos (distance = velocity * time), this gives smooth movement independant of frame rate
         self.pos += self.vel * self.game.dt
+        self.image = self.game.player_image.copy() #tis
+        if self.damaged:
+            try:
+                val = next(self.damage_alpha)
+                print(val)
+                self.image.fill((255, 0, 0, val), special_flags=pygame.BLEND_RGBA_MULT)
+            except:
+                self.damaged = False
 
         # collision detection, we update the hit_rect and test for collisions
         self.hit_rect.x = self.pos.x
@@ -204,7 +218,7 @@ class Mob(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, game, pos, dir):
+    def __init__(self, game, pos, dir, dmg):
         self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.bullet_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -216,8 +230,9 @@ class Bullet(pygame.sprite.Sprite):
         self.pos = vec(pos) # this create a copy of the pos passed in
         self.rect.center = self.pos
         spread = uniform(-WEAPONS[self.game.player.weapon]['spread'], WEAPONS[self.game.player.weapon]['spread']) # randomize the path the bullet will take between BULLET_SPREAD
-        self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed']
+        self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed'] * uniform(0.9, 1.1)
         # bullet specific
+        self.dmg = dmg
         self.spawn_time = pygame.time.get_ticks() # record at what time the bullet was spawned
 
     def update(self):

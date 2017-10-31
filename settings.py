@@ -22,11 +22,17 @@ MAP = 'grasslands_1.tmx'
 BG_MUSIC = 'music/espionage.ogg'
 GAME_SOUNDS = {
     'level_start': 'level_start.wav',
-    'health_up': 'health_pack.wav'
+    'health_up': 'health_pack.wav',
+    'gun_pickup': 'gun_pickup.wav'
 }
 
+DAMAGE_ALPHA = [i for i in range(0, 255, 25)]
+LIGHT_MASK = 'light_350_med.png'
+LIGHT_RADIUS = (500, 500)
+NIGHT_COLOR = (20, 20, 20)
+
 # Player
-PLAYER_HEALTH = 100
+PLAYER_HEALTH = 20
 PLAYER_IMAGE = 'rock1.png'
 PLAYER_SPEED = 300 # the speed the player will move in pixels/sec
 PLAYER_HIT_RECT = pygame.Rect(0, 0, 32, 32)
@@ -85,7 +91,11 @@ BULLET_LAYER = 3
 EFFECT_LAYER = 4
 
 # Items
-ITEM_IMAGES = {'health': 'genericItem_color_102.png'}
+ITEM_IMAGES = {
+    'health': 'genericItem_color_102.png',
+    'shotgun': 'obj_shotgun.png'
+    
+}
 ITEM_BOB_RANGE = 30
 ITEM_BOB_SPEED = 0.3
 

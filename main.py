@@ -3,7 +3,8 @@ import sys
 import os
 from pygame.locals import *
 from settings import *
-from player import Player, Obstacle, Mob, collide_hit_rect, Item
+#from player import Player, Obstacle, Mob, collide_hit_rect, Item
+import player
 from tilemap import TiledMap, Camera
 from random import choice,random
 
@@ -83,11 +84,18 @@ class Game:
         self.snd_dir = os.path.join(self.dir, 'snd')
         self.map_dir = os.path.join(self.dir, 'map')
 
+        # lighting effects
+        self.fog = pygame.Surface((WINDOWWIDTH, WINDOWHEIGHT))
+        self.fog.fill(NIGHT_COLOR)
+        self.light_mask = pygame.image.load(os.path.join(self.img_dir, LIGHT_MASK)).convert_alpha()
+        self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
+        self.light_rect = self.light_mask.get_rect()
+
 
         # font
         self.font = os.path.join(self.img_dir, 'ZOMBIE.TTF')
         print(os.path.join(self.img_dir, PLAYER_IMAGE))
-        self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE))
+        self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE)).convert_alpha()
         self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
         
         self.splat_image = pygame.image.load(os.path.join(self.img_dir, 'splat red.png'))
@@ -100,9 +108,7 @@ class Game:
         self.dim_screen.fill((0, 0, 0, 180))
         self.mob_image = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
         
-        self.map = TiledMap(os.path.join(self.map_dir, MAP))
-        self.map_img = self.map.make_map()
-        self.map_rect = self.map_img.get_rect()
+
 
         self.gun_flashes = []
         for img in MUZZLE_FLASHES:
@@ -148,7 +154,12 @@ class Game:
     def new(self):
 
         self.paused = False
-        #self.map = Map(self)
+        self.night = False
+        
+        self.map = TiledMap(os.path.join(self.map_dir, MAP))
+        self.map_img = self.map.make_map()
+        self.map_rect = self.map_img.get_rect()
+        
         self.camera = Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
 
         # Define sprites
@@ -166,17 +177,17 @@ class Game:
                 Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
             if tile_object.name == 'mob':
                 Mob(self, tile_object.x, tile_object.y)
-            if tile_object.name in ['health']:
+            if tile_object.name in ['health', 'shotgun']:
                 Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
             
         self.effects_sounds['level_start'].play()
 
-        self.run()
 
     def run(self):
         # Game loop
+        self.playing = True
         pygame.mixer.music.play(loops = 1)
-        while True:
+        while self.playing:
             # clock.tick delays loop enough to stay at the correct FPS
             # dt is how long the previous frame took in seconds, this is used to produce smooth movement independant of frame rate
             self.dt = self.clock.tick(FPS) / 1000
@@ -194,6 +205,9 @@ class Game:
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_p:
                     self.paused = not self.paused
+                if event.key == pygame.K_n:
+                    self.night = not self.night
+                    print('night ' +  str(self.night))
 
     def update(self):
         # call the update method on all sprites
@@ -209,6 +223,10 @@ class Game:
                 hit.kill()
                 self.effects_sounds['health_up'].play()
                 self.player.health = PLAYER_HEALTH
+            if hit.type == 'shotgun':
+                hit.kill()
+                self.effects_sounds['gun_pickup'].play()
+                self.player.weapon = 'shotgun'
 
         # should this move to the mob class????
         # mobs hit player
@@ -218,20 +236,22 @@ class Game:
             if random() < 0.7: 
                 choice(self.player_hit_sounds).play()
             self.player.health -= MOB_DAMAGE
-            print(self.player.health)
             hit.vel = vec(0, 0)
             if self.player.health <= 0:
                 self.playing = False
-            if hits:
-                self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
+        if hits:
+            self.player.hit()
+            self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
 
         # bullets hit mobs
         hits = pygame.sprite.groupcollide(self.mob_sprites, self.bullet_sprites, False, True)
-        for hit in hits:
+        for mob in hits:
             # decrement health by damange * # of bullets that hit
-            hit.health -= WEAPONS[self.player.weapon]['damage'] * len(hits[hit])
+            #hit.health -= WEAPONS[self.player.weapon]['damage'] * len(hits[hit])
+            for bullet in hits[mob]:
+                mob.health -= bullet.dmg
             # stall sprite to simulate stopping power of bullet
-            hit.vel = vec(0, 0)
+            mob.vel = vec(0, 0)
   
 
     def draw(self):
@@ -259,6 +279,11 @@ class Game:
                 pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
             for sprite in self.bullet_sprites:
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
+        
+        if self.night:
+            self.render_fog()
+        
+        
         # HUD
         draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
 
@@ -269,10 +294,44 @@ class Game:
         # update the screen
         pygame.display.update()
 
+    def render_fog(self):
+        # draw the light mask (gradient) onto fog image
+        self.fog.fill(NIGHT_COLOR)
+        self.light_rect.center = self.camera.apply(self.player.rect).center
+        self.fog.blit(self.light_mask, self.light_rect)
+        self.screen.blit(self.fog, (0,0), special_flags=pygame.BLEND_MULT)
+
+
+
+    def show_start_screen(self):
+        pass
+
+    def show_gameover_screen(self):
+        self.screen.fill(BLACK)
+        self.draw_text("GAME OVER", self.font, 100, RED, WINDOWWIDTH/2, WINDOWHEIGHT/2, align="center")
+        self.draw_text("press a key to restart", self.font, 50, WHITE, WINDOWWIDTH/2, WINDOWHEIGHT * 3/4, align="center")
+        pygame.display.flip()
+        self.wait_for_key()
+
+    def wait_for_key(self):
+        pygame.event.wait() #clear event queue
+        waiting = True
+        while waiting:
+            self.clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.quit()
+                if event.type == pygame.KEYUP:
+                    waiting = False
+        
+
 
 if __name__ == '__main__':
     g = Game()
     while g.running:
         g.new()
+        g.run()
+        g.show_gameover_screen()
 
 pygame.quit()
