@@ -1,16 +1,15 @@
 import pygame
 import pytmx
-from pygame.locals import *
 from settings import *
 
-class TiledMap:
+class TileMap(object):
     def __init__(self, filename):
         tm = pytmx.load_pygame(filename, pixelalpha = True)
         self.width = tm.width * tm.tilewidth
         self.height = tm.height * tm.tileheight
         self.tmxdata = tm
 
-    def render(self, surface):
+    def _render(self, surface):
         for layer in self.tmxdata.visible_layers:
             if isinstance(layer, pytmx.TiledTileLayer):
                 for x, y, gid in layer:
@@ -20,36 +19,44 @@ class TiledMap:
 
     def make_map(self):
         temp_surface = pygame.Surface((self.width, self.height))
-        self.render(temp_surface)
+        self._render(temp_surface)
         return temp_surface
 
-class Map:
-    def __init__(self, game):
-        self.game = game
-        self.map = self.game.game_map
-        self.tilewidth = self.map.tilewidth
-        self.tileheight = self.map.tileheight
-        self.width = self.map.width * self.tilewidth
-        self.height = self.map.height * self.tileheight
+class Hud(object):
+    def __init__(self, player, x, y):
+        self.player = player
+        self.x = x
+        self.y = y
+        self.hbar_length = 100
+        self.hbar_height = 20
+        self.hbar_outline =  pygame.Rect(x, y, self.hbar_length, self.hbar_height)
+        self.hbar_outline_col = WHITE
+        self.hbar_fill = pygame.Rect(x, y, self.hbar_length, self.hbar_height)
+        self.hbar_fill_col = GREEN
 
-    def draw(self, screen):
-        for layer in self.map.visible_layers:
-            for x, y, gid, in layer:
-                tile = self.map.get_tile_image_by_gid(gid)
-                if tile != None:
-                    tile_x = x * self.tilewidth
-                    tile_y = y * self.tileheight
-                    tile_rect = pygame.Rect(tile_x, tile_y , tile_x + self.tilewidth, tile_y + self.tileheight)
-                    screen.blit(tile, self.game.camera.apply(tile_rect))
+    def update(self):
+        # calculate percent health player has
+        pct = self.player.health / self.player.max_health
+        if pct < 0:
+            pct = 0
+
+        # based on pct choose color
+        if pct > 0.6:
+            self.hbar_fill_col = GREEN
+        elif pct > 0.3:
+            self.hbar_fill_col = YELLOW
+        else:
+            self.hbar_fill_col = RED
+
+        # update the hud rect that will be drawn
+        fill = pct * self.hbar_length
+        self.hbar_fill = pygame.Rect(self.x, self.y, fill, self.hbar_height)
 
 
-"""
-The camera is simply a Rect that moves with the player
-
-As the camera moves other objects are shifted the same amount in the opposite direction
-to create the feeling that the camera is scrolling through the map
-"""
-class Camera:
+class Camera(object):
+    """The camera is simply a Rect that moves with the player
+    As the camera moves other objects are shifted the same amount in the opposite direction
+    to create the feeling that the camera is scrolling through the map"""
     def __init__(self, map, width, height):
         self.width = width
         self.height = height

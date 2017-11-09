@@ -1,6 +1,7 @@
 
 
 https://gamemechanicexplorer.com/
+http://www.nerdparadise.com/programming/pygamejoystick
 
 Debug Build (as folder and with console)
 ```
