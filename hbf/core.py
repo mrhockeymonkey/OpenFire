@@ -2,36 +2,13 @@ import pygame
 import sys
 from os import path
 from random import choice,random
-
-import hbf.sprites as sprites
-import hbf.terrain as terrain
-
+from hbf import sprites
+from hbf import environment
 from pygame.locals import * 
 from settings import *
 
 # alias
 vec = pygame.math.Vector2
-
-# HUD functions
-def draw_player_health(surf, x, y, pct):
-    if pct < 0:
-        pct = 0
-    
-    BAR_LENGTH = 100
-    BAR_HEIGHT = 20
-    fill = pct * BAR_LENGTH
-    outlin_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
-    fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
-
-    if pct > 0.6:
-        col = GREEN
-    elif pct > 0.3:
-        col = YELLOW
-    else:
-        col = RED
-
-    pygame.draw.rect(surf, col, fill_rect)
-    pygame.draw.rect(surf, WHITE, outlin_rect, 2)
 
 class Game:
     def __init__(self):
@@ -157,11 +134,13 @@ class Game:
         self.paused = False
         self.night = False
         
-        self.map = terrain.TiledMap(os.path.join(self.map_dir, MAP))
+        self.map = environment.TileMap(os.path.join(self.map_dir, MAP))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         
-        self.camera = terrain.Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
+        self.camera = environment.Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
+
+        
 
         # Define sprites
         self.all_sprites = pygame.sprite.LayeredUpdates()
@@ -180,6 +159,8 @@ class Game:
                 sprites.Mob(self, tile_object.x, tile_object.y)
             if tile_object.name in ['health', 'shotgun']:
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
+
+        self.hud = environment.Hud(self.player, 10, 10)
             
         self.effects_sounds['level_start'].play()
 
@@ -221,6 +202,7 @@ class Game:
 
         # ???
         self.camera.update(self.player)
+        self.hud.update()
 
         # player hits items
         hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False)
@@ -265,6 +247,8 @@ class Game:
         # draw map5
         self.screen.blit(self.map_img, self.camera.apply(self.map_rect))
 
+
+
         # draw sprites
         for sprite in self.all_sprites:
             if isinstance(sprite, sprites.Mob):
@@ -290,8 +274,10 @@ class Game:
             self.render_fog()
         
         
-        # HUD
-        draw_player_health(self.screen, 10, 10, self.player.health / PLAYER_HEALTH)
+        # draw the HUD
+        pygame.draw.rect(self.screen, self.hud.hbar_fill_col, self.hud.hbar_fill)
+        pygame.draw.rect(self.screen, self.hud.hbar_outline_col, self.hud.hbar_outline, 2)  
+
 
         if self.paused:
             self.screen.blit(self.dim_screen, (0,0))

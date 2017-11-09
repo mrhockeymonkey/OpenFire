@@ -4,6 +4,7 @@ from random import uniform, randint, choice
 import pytweening as tween
 from settings import *
 from itertools import chain
+from hbf import animation
 
 vec = pygame.math.Vector2
 
@@ -65,6 +66,7 @@ class Player(pygame.sprite.Sprite):
         
         self.last_shot = 0
         self.health = PLAYER_HEALTH
+        self.max_health = PLAYER_HEALTH
 
         self.weapon = 'pistol'
         self.damaged = False
@@ -305,33 +307,4 @@ class Item(pygame.sprite.Sprite):
 
     def update(self):
         # bobbing motion - this is split into two phases: rise & bounce
-        if self.animation == 'rise':
-            # the rise is an exponential in
-            offset = (ITEM_BOB_RANGE * tween.easeInExpo(self.step / ITEM_BOB_RANGE))
-            direction = 1
-            self.rect.centery = self.pos.y - offset * direction
-            self.step += ITEM_BOB_SPEED
-            if self.step > ITEM_BOB_RANGE:
-                self.step = 0
-                self.animation = 'bounce'
-
-        if self.animation == 'bounce':
-            # 
-            offset = ITEM_BOB_RANGE * tween.easeOutBounce(self.step / ITEM_BOB_RANGE)
-            direction = 1
-            self.rect.centery = self.pos.y - ITEM_BOB_RANGE + offset
-            self.step += ITEM_BOB_SPEED
-            if self.step > ITEM_BOB_RANGE:
-                self.step = 0
-                self.animation = 'rise'
-
-
-         # how far are we through thr bob range as a percentage. the tween will be a value between 0 and 1 so - 0.5 to center it
-         #offset = ITEM_BOB_RANGE * (self.tween(self.step / ITEM_BOB_RANGE))
-         #self.rect.centery = self.pos.y + offset
-         ##self.rect.centery = self.pos.y + offset * self.dir
-         #self.step += ITEM_BOB_SPEED
-         ## if the step is past the range we start going the other way
-         #if self.step > ITEM_BOB_RANGE:
-         #    self.step = 0
-             #self.dir *= -1
+        animation.Animate.rise_and_bounce(self, ITEM_BOB_RANGE, ITEM_BOB_SPEED)

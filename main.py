@@ -1,13 +1,12 @@
 import pygame
 import sys
-import hbf.game as game
+import hbf
 
 if __name__ == '__main__':
-    g = game.Game()
+    g = hbf.core.Game()
     while not g.exit:
         g.new()
         g.run()
 
-print('exiting game...')
 pygame.quit()
 sys.exit()
