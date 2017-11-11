@@ -8,35 +8,60 @@ from hbf import animation
 
 vec = pygame.math.Vector2
 
-# used to determine when a hit_rect has collided with another sprite
-# this is used as a callback function in pygame.sprite.pritecollide()
-def collide_hit_rect(sprite1, sprite2):
-    return sprite1.hit_rect.colliderect(sprite2.rect)
 
-def collide_wall(sprite, group, direction):
-    if direction == 'x':
-        # detect is there is any pixel collision between sprite rects
-        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
-        if hits:
-            if hits[0].rect.centerx > sprite.hit_rect.centerx: #i.e. if player center > wall center then player is on RHS
-                sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width
-            if hits[0].rect.centerx < sprite.hit_rect.centerx: # player is LHS
-                sprite.pos.x = hits[0].rect.right
-            # cancel out velocity and update the player rect
-            sprite.vel.x = 0
-            sprite.hit_rect.x = sprite.pos.x
-    if direction == 'y':
-        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
-        if hits:
-            if hits[0].rect.centery > sprite.hit_rect.centery: # player below
-                sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height
-            if hits[0].rect.centery < sprite.hit_rect.centery: # player above
-                sprite.pos.y = hits[0].rect.bottom
-            # cancel out velocity and update the player rect
-            sprite.vel.y = 0
-            sprite.hit_rect.y = sprite.pos.y
+class Sprite(pygame.sprite.Sprite):
+    def __init__(self, game, groups, layer, image, pos):
+        pygame.sprite.Sprite.__init__(self, self.groups) # inherite from pygame sprite class and add to groups
+        self.game = game
+        self.layer = layer # used to decide order in which things are drawn, i.e. bullets below walls becuase you cannot shoot through a wall
+        self.image = image # the image for the sprite
+        self.rect = self.image.get_rect() # the rect of the image
+        self.width = self.image.get_width() # the width of the sprite
+        self.height = self.image.get_height() # the height of the sprite
+        self.pos = pos # the sprite position as a vector
+        self.vel = vec(0, 0) # the sprite velocity as a vector
+        self.rot = 0 # the sprites rotation
+        self.rect.center = self.pos # update sprite to be at given pos
 
-class Player(pygame.sprite.Sprite):
+    @staticmethod
+    def collide_hitrect(sprite1, sprite2):
+        """Returns bool. Determines if a sprite's hitrect has collided with another rect.
+        This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
+        return sprite1.hit_rect.colliderect(sprite2.rect)
+
+    def correct_collision(self, sprite, group, direction):
+        if direction == 'x':
+            # detect is there is any pixel collision between sprite rects
+            hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_hitrect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
+            if hits:
+                if hits[0].rect.centerx > sprite.hit_rect.centerx: #i.e. if player center > wall center then player is on RHS
+                    sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width
+                if hits[0].rect.centerx < sprite.hit_rect.centerx: # player is LHS
+                    sprite.pos.x = hits[0].rect.right
+                # cancel out velocity and update the player rect
+                sprite.vel.x = 0
+                sprite.hit_rect.x = sprite.pos.x
+        if direction == 'y':
+            hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_hitrect)
+            if hits:
+                if hits[0].rect.centery > sprite.hit_rect.centery: # player below
+                    sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height
+                if hits[0].rect.centery < sprite.hit_rect.centery: # player above
+                    sprite.pos.y = hits[0].rect.bottom
+                # cancel out velocity and update the player rect
+                sprite.vel.y = 0
+                sprite.hit_rect.y = sprite.pos.y
+
+
+class Obstacle(Sprite):
+    def __init__(self, game, pos, w, h):
+        self.groups = game.wall_sprites
+        Sprite.__init__(self, game, self.groups, WALL_LAYER, game.player_image, pos) # inherit from Sprite
+        self.rect = pygame.Rect(pos.x, pos.y, w, h)
+
+
+#class Player(pygame.sprite.Sprite):
+class Player(Sprite):
     """
     This class represents the main player. It derives from the "Sprite" class in Pygame.
 
@@ -44,23 +69,10 @@ class Player(pygame.sprite.Sprite):
     The hitbox is used to determine collisions as solves some problems with using the image rect for collision detection. 
     """
 
-    def __init__(self, game, x, y):
-        # initialize sprite class, adding sprite to groups immediately
-        self._layer = PLAYER_LAYER 
+    def __init__(self, game, pos):
         self.groups = game.all_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        # player image
-        self.image = self.game.player_image
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        # player position and velocity
-        self.pos = vec(x, y)
-        self.vel = vec(0, 0)
-        self.rot = 0
-        # player hitbox
+        Sprite.__init__(self, game, self.groups, PLAYER_LAYER, game.player_image, pos) # inherit from Sprite
+        
         self.hit_rect = PLAYER_HIT_RECT.copy() 
         self.hit_rect.center = self.rect.center
         
@@ -129,33 +141,18 @@ class Player(pygame.sprite.Sprite):
 
         # collision detection, we update the hit_rect and test for collisions
         self.hit_rect.x = self.pos.x
-        collide_wall(self, self.game.wall_sprites, 'x')
+        self.correct_collision(self, self.game.wall_sprites, 'x')
         self.hit_rect.y = self.pos.y
-        collide_wall(self, self.game.wall_sprites, 'y')
+        self.correct_collision(self, self.game.wall_sprites, 'y')
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
 
-class Mob(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        self._layer = MOB_LAYER
+class Mob(Sprite):
+    def __init__(self, game, pos):
         self.groups = game.all_sprites, game.mob_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        # mob image
-        #self.image_left = 
-        #self.image_right = pygame.transform.flip(self.image_left, True, False)
-        self.image = self.game.mob_image.copy()
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        # mob position and velocity
-        self.pos = vec(x, y)
-        self.vel = vec(0, 0)
-        self.rect.center = self.pos
-        self.rot = 0
-        # mob hitbox
+        Sprite.__init__(self, game, self.groups, MOB_LAYER, game.mob_image.copy(), pos)  # inherit from Sprite
+        
         self.hit_rect = MOB_HIT_RECT.copy()
         self.hit_rect.center = self.rect.center
         self.health = MOB_HEALTH
@@ -206,9 +203,9 @@ class Mob(pygame.sprite.Sprite):
 
         # collision detection
         self.hit_rect.x = self.pos.x
-        collide_wall(self, self.game.wall_sprites, 'x')
+        self.correct_collision(self, self.game.wall_sprites, 'x')
         self.hit_rect.y = self.pos.y
-        collide_wall(self, self.game.wall_sprites, 'y')
+        self.correct_collision(self, self.game.wall_sprites, 'y')
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
@@ -219,18 +216,14 @@ class Mob(pygame.sprite.Sprite):
             self.game.map_img.blit(self.game.splat_image, self.pos)
 
 
-class Bullet(pygame.sprite.Sprite):
+class Bullet(Sprite):
     def __init__(self, game, pos, dir, dmg):
-        self._layer = BULLET_LAYER
         self.groups = game.all_sprites, game.bullet_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        # bullet image
-        self.image = self.game.bullet_image
-        self.rect = self.image.get_rect()
+        Sprite.__init__(self, game, self.groups, BULLET_LAYER, game.bullet_image, pos) # inherit from Sprite
+
         # bullet positional
         self.pos = vec(pos) # this create a copy of the pos passed in
-        self.rect.center = self.pos
+        #self.rect.center = self.pos
         spread = uniform(-WEAPONS[self.game.player.weapon]['spread'], WEAPONS[self.game.player.weapon]['spread']) # randomize the path the bullet will take between BULLET_SPREAD
         self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed'] * uniform(0.9, 1.1)
         # bullet specific
@@ -248,60 +241,26 @@ class Bullet(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.spawn_time > WEAPONS[self.game.player.weapon]['lifetime']:
             self.kill()
 
-#class Wall(pygame.sprite.Sprite):
-#    def __init__(self, game, x, y):
-#        self.groups = game.all_sprites, game.wall_sprites
-#        pygame.sprite.Sprite.__init__(self, self.groups)
-#        self.game = game
-#        self.image = self.game.player_image
-#        self.rect = self.image.get_rect()
-#        self.x = x
-#        self.y = y
-#        self.rect.x = self.x
-#        self.rect.y = self.y
 
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, w, h):
-        self._layer = WALL_LAYER
-        self.groups = game.wall_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
-        self.image = self.game.player_image
-        self.rect = pygame.Rect(x, y, w, h)
-        self.x = x
-        self.y = y
-        #self.rect.x = self.x
-        #self.rect.y = self.y
-
-
-class MuzzleFlash(pygame.sprite.Sprite):
+class MuzzleFlash(Sprite):
     def __init__(self, game, pos):
-        self._layer = EFFECT_LAYER
         self.groups =game.all_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.game = game
         size = randint(20, 50)
-        self.image = pygame.transform.scale(choice(game.gun_flashes), (size,size))
-        self.rect = self.image.get_rect()
-        self.pos = pos
-        self.rect.center = pos
+        image = pygame.transform.scale(choice(game.gun_flashes), (size,size))
+        Sprite.__init__(self, game, self.groups, EFFECT_LAYER, image, pos) # inherit from Sprite
+
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
         if pygame.time.get_ticks() - self.spawn_time > 40:
             self.kill()
 
-class Item(pygame.sprite.Sprite):
+class Item(Sprite):
     def __init__(self, game, pos, type):
-        self._layer = ITEMS_LAYER
         self.groups = game.all_sprites, game.item_sprites
-        pygame.sprite.Sprite.__init__(self,self.groups)
-        self.game = game
-        self.image = game.item_images[type]
-        self.rect = self.image.get_rect()
+        Sprite.__init__(self, game, self.groups, ITEMS_LAYER, game.item_images[type], pos) # inherit from Sprite
+
         self.type = type
-        self.pos = pos
-        self.rect.center = pos
         self.animation = 'rise'
         self.step = 0
 

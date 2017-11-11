@@ -6,7 +6,7 @@ FPS = 60
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
 CAMERASLACK = 90
-DEBUG = False
+DEBUG = True
 
 #Colours  R    G    B
 BLACK  = (0  , 0  , 0  )
@@ -83,12 +83,12 @@ WEAPON_SOUNDS = {
 MUZZLE_FLASHES = ['laserRed08.png', 'laserRed09.png', 'laserRed10.png', 'laserRed11.png']
 
 # Layers
-WALL_LAYER = 1
+WALL_LAYER = 1 # top most layer
 ITEMS_LAYER = 1
 PLAYER_LAYER = 2
 MOB_LAYER = 2
 BULLET_LAYER = 3
-EFFECT_LAYER = 4
+EFFECT_LAYER = 4 # bottom layer
 
 # Items
 ITEM_IMAGES = {
