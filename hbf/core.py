@@ -10,15 +10,14 @@ from settings import *
 # alias
 vec = pygame.math.Vector2
 
-class Game:
+class Game: 
     def __init__(self):
-        # initiate game
-        pygame.mixer.pre_init(44100, -16, 4, 2048)
+        pygame.mixer.pre_init(44100, -16, 4, 2048) #custom mixer settings (freq, size, channels, buffersize)
         pygame.init()
-        pygame.key.set_repeat(1, 1) # (delay, repeat)
+        pygame.key.set_repeat(1, 1) # setup repeat keys (delay, repeat)
         self.screen = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
         self.clock = pygame.time.Clock()
-        self.draw_debug = DEBUG
+        self.draw_debug = DEBUG 
         self.exit = False
 
         # loading files
@@ -152,11 +151,11 @@ class Game:
         for tile_object in self.map.tmxdata.objects:
             # could calculate center here to be cleaner
             if tile_object.name == 'player':
-                self.player = sprites.Player(self, tile_object.x , tile_object.y)
+                self.player = sprites.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
-                sprites.Obstacle(self, tile_object.x, tile_object.y, tile_object.width, tile_object.height)
+                sprites.Obstacle(self, vec(tile_object.x, tile_object.y), tile_object.width, tile_object.height)
             if tile_object.name == 'mob':
-                sprites.Mob(self, tile_object.x, tile_object.y)
+                sprites.Mob(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun']:
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
 
@@ -218,7 +217,7 @@ class Game:
 
         # should this move to the mob class????
         # mobs hit player
-        hits = pygame.sprite.spritecollide(self.player, self.mob_sprites, False, sprites.collide_hit_rect)
+        hits = pygame.sprite.spritecollide(self.player, self.mob_sprites, False, sprites.Sprite.collide_hitrect)
         for hit in hits:
             # randomly play hit sound
             if random() < 0.7: 
