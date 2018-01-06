@@ -25,13 +25,16 @@ class Sprite(pygame.sprite.Sprite):
         self.pos = pos # the sprite position as a vector
         self.vel = vec(0, 0) # the sprite velocity as a vector
         self.rot = 0 # the sprites rotation
+
         self.rect.center = self.pos # update sprite to be at given pos, here we use pos as the center insteasd of topleft
+
 
     @staticmethod
     def collide_hitrect(sprite1, sprite2):
         """Returns bool. Determines if a sprite's hitrect has collided with another rect.
         This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
         return sprite1.hit_rect.colliderect(sprite2.rect)
+
 
     @staticmethod
     def collide_polygon(sprite1, sprite2):
@@ -64,11 +67,13 @@ class Sprite(pygame.sprite.Sprite):
             
 
 
+
 class Obstacle(Sprite):
     def __init__(self, game, pos, w, h):
         self.groups = game.wall_sprites
         Sprite.__init__(self, game, self.groups, WALL_LAYER, game.player_image, pos) # inherit from Sprite
         self.rect = pygame.Rect(pos.x, pos.y, w, h)
+
 
 class ObstaclePoly(Sprite):
     def __init__(self, game, pos, points):
@@ -167,6 +172,8 @@ class Player(Sprite):
         self.correct_collision(self, self.game.wall_sprites)
         self.refresh_hitbox()
 
+
+
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
 
@@ -258,6 +265,7 @@ class Bullet(Sprite):
 
         # bullet positional
         self.pos = vec(pos) # this create a copy of the pos passed in
+
         spread = uniform(-WEAPONS[self.game.player.weapon]['spread'], WEAPONS[self.game.player.weapon]['spread']) # randomize the path the bullet will take between BULLET_SPREAD
         self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed'] * uniform(0.9, 1.1)
         # bullet specific

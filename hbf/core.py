@@ -156,11 +156,13 @@ class Game:
             if tile_object.name == 'player':
                 self.player = sprites.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
+
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'mob':
                 sprites.Mob(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
                 print('here')
+
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
 
         self.hud = environment.Hud(self.player, 10, 10)
