@@ -1,9 +1,12 @@
+#from __future__ import absolute_import, division, print_function
+
 import pygame
 import sys
 from os import path
 from random import choice,random
 from hbf import sprites
 from hbf import environment
+from hbf import input
 from pygame.locals import * 
 from settings import *
 
@@ -133,7 +136,7 @@ class Game:
         self.paused = False
         self.night = False
         
-        self.map = environment.TileMap(os.path.join(self.map_dir, MAP))
+        self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         
@@ -148,15 +151,18 @@ class Game:
         self.bullet_sprites = pygame.sprite.Group()
         self.item_sprites = pygame.sprite.Group()
 
+        # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
-            # could calculate center here to be cleaner
             if tile_object.name == 'player':
                 self.player = sprites.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
-                sprites.Obstacle(self, vec(tile_object.x, tile_object.y), tile_object.width, tile_object.height)
+
+                sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'mob':
                 sprites.Mob(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name in ['health', 'shotgun']:
+            if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
+                print('here')
+
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
 
         self.hud = environment.Hud(self.player, 10, 10)
@@ -168,11 +174,14 @@ class Game:
         # Game loop
         self.running = True
         pygame.mixer.music.play(loops = 1)
+
+        #self.input_manager = input.InputManager()
         
         while self.running:
             # clock.tick delays loop enough to stay at the correct FPS
             # dt is how long the previous frame took in seconds, this is used to produce smooth movement independant of frame rate
             self.dt = self.clock.tick(FPS) / 1000
+            #print(self.clock.tick(FPS)/1000)
             self.events()
             if not self.paused:
                 self.update()
@@ -184,6 +193,18 @@ class Game:
 
     def events(self):
         #Game loop - events
+        #num_joysticks = pygame.joystick.get_count()
+        
+        #pygame.joystick.quit()
+        #pygame.joystick.init()
+
+        #for event in self.input_manager.get_events():
+        #    print(event.key)
+
+            #if event.key == 'A' and event.down:
+            #    print('A')
+
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
@@ -214,6 +235,14 @@ class Game:
                 hit.kill()
                 self.effects_sounds['gun_pickup'].play()
                 self.player.weapon = 'shotgun'
+            if hit.type == 'pistol':
+                hit.kill()
+                self.effects_sounds['gun_pickup'].play()
+                self.player.weapon = 'pistol'
+            if hit.type == 'chainsaw':
+                hit.kill()
+                self.effects_sounds['gun_pickup'].play()
+                self.player.weapon = 'chainsaw'
 
         # should this move to the mob class????
         # mobs hit player
@@ -246,26 +275,29 @@ class Game:
         # draw map5
         self.screen.blit(self.map_img, self.camera.apply(self.map_rect))
 
-
-
         # draw sprites
         for sprite in self.all_sprites:
             if isinstance(sprite, sprites.Mob):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
+        #dot = pygame.C
         
         # debug 
         if self.draw_debug == True:
             pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
             pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
-            pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
+            #pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
+            pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(self.player.hit_poly)).points, 2)
+            for sprite in self.all_sprites:
+                pass
             for sprite in self.mob_sprites:
                 pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
                 #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
             for sprite in self.wall_sprites:
-                pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
+                pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
+                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
             for sprite in self.bullet_sprites:
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
         

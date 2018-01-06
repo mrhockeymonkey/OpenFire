@@ -1,10 +1,14 @@
+##from __future__ import absolute_import, division, print_function
+
 import pygame
 from pygame.locals import *
 from random import uniform, randint, choice
 import pytweening as tween
+#import pylygon
 from settings import *
 from itertools import chain
 from hbf import animation
+from hbf import polygon
 
 vec = pygame.math.Vector2
 
@@ -21,7 +25,9 @@ class Sprite(pygame.sprite.Sprite):
         self.pos = pos # the sprite position as a vector
         self.vel = vec(0, 0) # the sprite velocity as a vector
         self.rot = 0 # the sprites rotation
-        self.rect.center = self.pos # update sprite to be at given pos
+
+        self.rect.center = self.pos # update sprite to be at given pos, here we use pos as the center insteasd of topleft
+
 
     @staticmethod
     def collide_hitrect(sprite1, sprite2):
@@ -29,28 +35,37 @@ class Sprite(pygame.sprite.Sprite):
         This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
         return sprite1.hit_rect.colliderect(sprite2.rect)
 
-    def correct_collision(self, sprite, group, direction):
-        if direction == 'x':
-            # detect is there is any pixel collision between sprite rects
-            hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_hitrect) #sprite, group, dokill, collided (callback function to override method of checking collisions)
-            if hits:
-                if hits[0].rect.centerx > sprite.hit_rect.centerx: #i.e. if player center > wall center then player is on RHS
-                    sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width
-                if hits[0].rect.centerx < sprite.hit_rect.centerx: # player is LHS
-                    sprite.pos.x = hits[0].rect.right
-                # cancel out velocity and update the player rect
-                sprite.vel.x = 0
-                sprite.hit_rect.x = sprite.pos.x
-        if direction == 'y':
-            hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_hitrect)
-            if hits:
-                if hits[0].rect.centery > sprite.hit_rect.centery: # player below
-                    sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height
-                if hits[0].rect.centery < sprite.hit_rect.centery: # player above
-                    sprite.pos.y = hits[0].rect.bottom
-                # cancel out velocity and update the player rect
-                sprite.vel.y = 0
-                sprite.hit_rect.y = sprite.pos.y
+
+    @staticmethod
+    def collide_polygon(sprite1, sprite2):
+        """ Returnsbool. Determines if a spites hit_poly has collided with another Poly object.
+        This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
+        collision, mpv = sprite1.hit_poly.collidepoly(sprite2.hit_poly)
+        return collision
+
+    def update(self):
+        pass # this method always exists for a sprite but each subclass of sprite should decide what to update depending on its purpose
+
+    def refresh_hitbox(self):
+        """updates the hit_rect and hit_poly to the sprite current pos"""
+        self.hit_rect.center = self.pos
+        self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
+
+    def correct_collision(self, sprite, group):
+        """Adjust the position of the sprite so that it does not collide with the group. i.e. to stop sprite
+        walking through walls and other obstacles"""
+        # hits is the list of sprites that the calling sprite has collided with. eg the wall a player has run into
+        hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_polygon) #sprite, group, dokill, collided (callback function to override method of checking collisions)
+        if hits:
+            # if there are any hits we want the minimum push vector to move the sprite away
+            collision, mpv = sprite.hit_poly.collidepoly(hits[0].hit_poly)
+            
+            # update the sprite accordingly
+            sprite.pos.x = sprite.pos.x + mpv[0]
+            sprite.pos.y = sprite.pos.y + mpv[1]
+            sprite.vel.x = 0
+            
+
 
 
 class Obstacle(Sprite):
@@ -58,6 +73,14 @@ class Obstacle(Sprite):
         self.groups = game.wall_sprites
         Sprite.__init__(self, game, self.groups, WALL_LAYER, game.player_image, pos) # inherit from Sprite
         self.rect = pygame.Rect(pos.x, pos.y, w, h)
+
+
+class ObstaclePoly(Sprite):
+    def __init__(self, game, pos, points):
+        self.groups = game.wall_sprites
+        Sprite.__init__(self, game, self.groups, WALL_LAYER, game.player_image, pos) # inherit from Sprite?????
+        self.polygon = polygon.Poly(points)
+        self.hit_poly = self.polygon
 
 
 #class Player(pygame.sprite.Sprite):
@@ -74,7 +97,10 @@ class Player(Sprite):
         Sprite.__init__(self, game, self.groups, PLAYER_LAYER, game.player_image, pos) # inherit from Sprite
         
         self.hit_rect = PLAYER_HIT_RECT.copy() 
-        self.hit_rect.center = self.rect.center
+        self.refresh_hitbox()
+        
+        #self.hit_rect.center = self.rect.center
+        #self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
         
         self.last_shot = 0
         self.health = PLAYER_HEALTH
@@ -82,6 +108,8 @@ class Player(Sprite):
 
         self.weapon = 'pistol'
         self.damaged = False
+
+        self.weaponn = Weapon(self.game, self.pos)
 
     def _get_keys(self):
         self.vel = vec(0, 0)
@@ -139,11 +167,12 @@ class Player(Sprite):
             except:
                 self.damaged = False
 
-        # collision detection, we update the hit_rect and test for collisions
-        self.hit_rect.x = self.pos.x
-        self.correct_collision(self, self.game.wall_sprites, 'x')
-        self.hit_rect.y = self.pos.y
-        self.correct_collision(self, self.game.wall_sprites, 'y')
+        # now that the sprite has been moved, test for collisions and correct
+        self.refresh_hitbox()
+        self.correct_collision(self, self.game.wall_sprites)
+        self.refresh_hitbox()
+
+
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
@@ -154,7 +183,9 @@ class Mob(Sprite):
         Sprite.__init__(self, game, self.groups, MOB_LAYER, game.mob_image.copy(), pos)  # inherit from Sprite
         
         self.hit_rect = MOB_HIT_RECT.copy()
-        self.hit_rect.center = self.rect.center
+        self.refresh_hitbox()
+        #self.hit_rect.center = self.rect.center
+        #self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
         self.health = MOB_HEALTH
         self.target = self.game.player
 
@@ -201,11 +232,10 @@ class Mob(Sprite):
             self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
             #sself.rect.center = self.pos
 
-        # collision detection
-        self.hit_rect.x = self.pos.x
-        self.correct_collision(self, self.game.wall_sprites, 'x')
-        self.hit_rect.y = self.pos.y
-        self.correct_collision(self, self.game.wall_sprites, 'y')
+        # now that the sprite has been moved, test for collisions and correct
+        self.refresh_hitbox()
+        self.correct_collision(self, self.game.wall_sprites)
+        self.refresh_hitbox()
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
@@ -216,6 +246,18 @@ class Mob(Sprite):
             self.game.map_img.blit(self.game.splat_image, self.pos)
 
 
+class Weapon(Sprite):
+    def __init__(self, game, pos):
+        self.groups = game.all_sprites
+        Sprite.__init__(self, game, self.groups, PLAYER_LAYER, game.item_images['pistol'], pos) # inherit from Sprite
+
+    def update(self):
+        self.image = self.game.item_images[self.game.player.weapon]
+        self.pos = self.game.player.pos
+        self.rect.center = self.pos
+
+
+
 class Bullet(Sprite):
     def __init__(self, game, pos, dir, dmg):
         self.groups = game.all_sprites, game.bullet_sprites
@@ -223,7 +265,7 @@ class Bullet(Sprite):
 
         # bullet positional
         self.pos = vec(pos) # this create a copy of the pos passed in
-        #self.rect.center = self.pos
+
         spread = uniform(-WEAPONS[self.game.player.weapon]['spread'], WEAPONS[self.game.player.weapon]['spread']) # randomize the path the bullet will take between BULLET_SPREAD
         self.vel = dir.rotate(spread) * WEAPONS[self.game.player.weapon]['speed'] * uniform(0.9, 1.1)
         # bullet specific

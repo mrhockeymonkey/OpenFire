@@ -1,3 +1,5 @@
+#from __future__ import absolute_import, division, print_function
+
 import os
 import pygame
 
@@ -19,6 +21,9 @@ CYAN   = (0  , 255, 255)
 # -------- OPTIONS -------- #
 #Map
 MAP = 'grasslands_1.tmx'
+#MAP = 'C:/Users/Scott/Downloads/Kenney Isometric Assets version 3/Prototype pack/Tiled/tiledTemplate_isometric.tmx'
+MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/mirror-edge-map.tmx"
+MAP_Y_OFFSET = 363 # the distance the map will be moved up when rendered to cut out empty space and position items correctly. This is to take into account the large tile heights in kenney assets. Calculated as tileset height - map tile height
 BG_MUSIC = 'music/espionage.ogg'
 GAME_SOUNDS = {
     'level_start': 'level_start.wav',
@@ -74,6 +79,17 @@ WEAPONS['shotgun'] = {
     'count': 12
     #'sound': ['shotgun.wav']
 }
+WEAPONS['chainsaw'] = {
+    'speed': 400, 
+    'lifetime': 500, 
+    'rate': 900, 
+    'kickback': 300, 
+    'spread': 20, 
+    'damage': 10, 
+    'size': 'sm',
+    'count': 12
+    #'sound': ['shotgun.wav']
+}
 WEAPON_SOUNDS = {
     'pistol': ['sfx_weapon_singleshot2.wav'],
     'shotgun': ['shotgun.wav']
@@ -93,8 +109,9 @@ EFFECT_LAYER = 4 # bottom layer
 # Items
 ITEM_IMAGES = {
     'health': 'genericItem_color_102.png',
-    'shotgun': 'obj_shotgun.png'
-    
+    'shotgun': 'fg_42_by_ashmo.png',
+    'pistol': 'german_pistol_by_ashmo.png',
+    'chainsaw': 'chainsaw_by_ashmo.png'
 }
 ITEM_BOB_RANGE = 30
 ITEM_BOB_SPEED = 0.3
