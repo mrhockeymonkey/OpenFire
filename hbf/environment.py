@@ -1,5 +1,3 @@
-#from __future__ import absolute_import, division, print_function
-
 import pygame
 import pytmx
 from pytmx.util_pygame import load_pygame

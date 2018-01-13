@@ -1,5 +1,3 @@
-##from __future__ import absolute_import, division, print_function
-
 import pygame
 from pygame.locals import *
 from random import uniform, randint, choice
@@ -12,6 +10,51 @@ from hbf import polygon
 
 vec = pygame.math.Vector2
 
+class SpriteStripAnim(object):
+    """sprite strip animator
+    
+    This class provides an iterator (iter() and next() methods), and a
+    __add__() method for joining strips which comes in handy when a
+    strip wraps to the next row.
+    """
+    def __init__(self, filename, rect, count, colorkey=None, loop=False, frames=1):
+        """construct a SpriteStripAnim
+        
+        filename, rect, count, and colorkey are the same arguments used
+        by spritesheet.load_strip.
+        
+        loop is a boolean that, when True, causes the next() method to
+        loop. If False, the terminal case raises StopIteration.
+        
+        frames is the number of ticks to return the same image before
+        the iterator advances to the next image.
+        """
+        self.filename = filename
+        ss = spritesheet(filename)
+        self.images = ss.load_strip(rect, count, colorkey)
+        self.i = 0
+        self.loop = loop
+        self.frames = frames
+        self.f = frames
+    def iter(self):
+        self.i = 0
+        self.f = self.frames
+        return self
+    def next(self):
+        if self.i >= len(self.images):
+            if not self.loop:
+                raise StopIteration
+            else:
+                self.i = 0
+        image = self.images[self.i]
+        self.f -= 1
+        if self.f == 0:
+            self.i += 1
+            self.f = self.frames
+        return image
+    def __add__(self, ss):
+        self.images.extend(ss.images)
+        return self
 
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, game, groups, layer, image, pos):
@@ -111,18 +154,34 @@ class Player(Sprite):
 
         self.weaponn = Weapon(self.game, self.pos)
 
+        self.ss = spritesheet(os.path.join('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img', 'steampunk_f12.png'))
+        self.strips = [
+            SpriteStripAnim('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img/steampunk_f12.png', (0, 0, 32, 52), 4, 1, True,  15 ), #down
+            SpriteStripAnim('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img/steampunk_f12.png', (0, 52, 32, 52), 4, 1, True,  15 ), #left
+            SpriteStripAnim('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img/steampunk_f12.png', (0, 104, 32, 52), 4, 1, True,  15 ), #rigt
+            SpriteStripAnim('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img/steampunk_f12.png', (0, 156, 32, 52), 4, 1, True,  15 ) #up
+        ]
+        self.n = 0
+        self.strips[self.n].iter()
+        #self.image = self.strips[self.n].next()
+        #self.image = pygame.transform.scale(self.image, (50,50))
+
     def _get_keys(self):
         self.vel = vec(0, 0)
 
         keys = pygame.key.get_pressed()
         if keys[K_LEFT] or keys[K_a]:
             self.vel.x = -PLAYER_SPEED
+            self.n = 1
         if keys[K_RIGHT] or keys[K_d]:
             self.vel.x = PLAYER_SPEED
+            self.n = 2
         if keys[K_UP] or keys[K_w]:
             self.vel.y = -PLAYER_SPEED
+            self.n = 3
         if keys[K_DOWN] or keys[K_s]:
             self.vel.y = PLAYER_SPEED
+            self.n = 0
         # to stop faster diagonal movement need to multipy by square root of 2
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= 0.7071
@@ -162,7 +221,6 @@ class Player(Sprite):
         if self.damaged:
             try:
                 val = next(self.damage_alpha)
-                print(val)
                 self.image.fill((255, 0, 0, val), special_flags=pygame.BLEND_RGBA_MULT)
             except:
                 self.damaged = False
@@ -176,6 +234,16 @@ class Player(Sprite):
 
         # keep the image and hit box together always
         self.rect.center = self.hit_rect.center
+
+        #self.n += 1
+        #if self.n >= len(self.strips):
+        #    self.n = 0
+        #self.strips[self.n].iter()
+        #if self.vel != 0:
+        print(self.vel)
+        if self.vel.length() != 0:
+            self.image = self.strips[self.n].next()
+        self.image = pygame.transform.scale(self.image, (100,100))
 
 class Mob(Sprite):
     def __init__(self, game, pos):
@@ -308,4 +376,35 @@ class Item(Sprite):
 
     def update(self):
         # bobbing motion - this is split into two phases: rise & bounce
-        animation.Animate.rise_and_bounce(self, ITEM_BOB_RANGE, ITEM_BOB_SPEED)
+        animation.rise_and_bounce(self, ITEM_BOB_RANGE, ITEM_BOB_SPEED)
+
+
+class spritesheet(object):
+    def __init__(self, filename):
+        try:
+            self.sheet = pygame.image.load(filename).convert()
+        except pygame.error as message:
+            print('Unable to load spritesheet image:' + filename)
+            raise SystemExit(message)
+    # Load a specific image from a specific rectangle
+    def image_at(self, rectangle, colorkey = None):
+        "Loads image from x,y,x+offset,y+offset"
+        rect = pygame.Rect(rectangle)
+        image = pygame.Surface(rect.size).convert()
+        image.blit(self.sheet, (0, 0), rect)
+        if colorkey is not None:
+            if colorkey is -1:
+                colorkey = image.get_at((0,0))
+            image.set_colorkey(colorkey, pygame.RLEACCEL)
+        return image
+    # Load a whole bunch of images and return them as a list
+    def images_at(self, rects, colorkey = None):
+        "Loads multiple images, supply a list of coordinates" 
+        return [self.image_at(rect, colorkey) for rect in rects]
+    # Load a whole strip of images
+    def load_strip(self, rect, image_count, colorkey = None):
+        "Loads a strip of images and returns them as a list"
+        tups = [(rect[0]+rect[2]*x, rect[1], rect[2], rect[3])
+                for x in range(image_count)]
+        return self.images_at(tups, colorkey)
+

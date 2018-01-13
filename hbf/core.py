@@ -1,5 +1,3 @@
-#from __future__ import absolute_import, division, print_function
-
 import pygame
 import sys
 from os import path
@@ -18,7 +16,12 @@ class Game:
         pygame.mixer.pre_init(44100, -16, 4, 2048) #custom mixer settings (freq, size, channels, buffersize)
         pygame.init()
         pygame.key.set_repeat(1, 1) # setup repeat keys (delay, repeat)
-        self.screen = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+        
+        display_info = pygame.display.Info() # initialize display
+        self.window_width = 1200 #display_info.current_w
+        self.window_height = 800 #display_info.current_h
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height)) #FULLSCREEN|HWSURFACE|DOUBLEBUF)
+        
         self.clock = pygame.time.Clock()
         self.draw_debug = DEBUG 
         self.exit = False
@@ -65,7 +68,7 @@ class Game:
         self.map_dir = os.path.join(self.dir, '../map')
 
         # lighting effects
-        self.fog = pygame.Surface((WINDOWWIDTH, WINDOWHEIGHT))
+        self.fog = pygame.Surface((self.window_width, self.window_height))
         self.fog.fill(NIGHT_COLOR)
         self.light_mask = pygame.image.load(os.path.join(self.img_dir, LIGHT_MASK)).convert_alpha()
         self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
@@ -74,8 +77,13 @@ class Game:
 
         # font
         self.font = os.path.join(self.img_dir, 'ZOMBIE.TTF')
+        
         print(os.path.join(self.img_dir, PLAYER_IMAGE))
+        
+        
         self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE)).convert_alpha()
+
+
         self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
         
         self.splat_image = pygame.image.load(os.path.join(self.img_dir, 'splat red.png'))
@@ -140,7 +148,7 @@ class Game:
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
         
-        self.camera = environment.Camera(self.map, WINDOWWIDTH, WINDOWHEIGHT)
+        self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
         
 
@@ -312,7 +320,7 @@ class Game:
 
         if self.paused:
             self.screen.blit(self.dim_screen, (0,0))
-            self.draw_text("Paused", self.font, 105, RED, WINDOWWIDTH / 2, WINDOWHEIGHT / 2, align="center")
+            self.draw_text("Paused", self.font, 105, RED, self.window_width / 2, self.window_height / 2, align="center")
 
         # update the screen
         pygame.display.update()
@@ -331,8 +339,8 @@ class Game:
 
     def show_gameover_screen(self):
         self.screen.fill(BLACK)
-        self.draw_text("GAME OVER", self.font, 100, RED, WINDOWWIDTH/2, WINDOWHEIGHT/2, align="center")
-        self.draw_text("press a key to restart", self.font, 50, WHITE, WINDOWWIDTH/2, WINDOWHEIGHT * 3/4, align="center")
+        self.draw_text("GAME OVER", self.font, 100, RED, self.window_width/2, self.window_height/2, align="center")
+        self.draw_text("press a key to restart", self.font, 50, WHITE, self.window_width/2, self.window_height * 3/4, align="center")
         pygame.display.flip()
         self.wait_for_key()
 

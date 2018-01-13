@@ -5,8 +5,6 @@ import pygame
 
 #Genral
 FPS = 60
-WINDOWWIDTH = 640
-WINDOWHEIGHT = 480
 CAMERASLACK = 90
 DEBUG = True
 
@@ -39,7 +37,7 @@ NIGHT_COLOR = (20, 20, 20)
 # Player
 PLAYER_HEALTH = 20
 PLAYER_IMAGE = 'rock1.png'
-PLAYER_SPEED = 300 # the speed the player will move in pixels/sec
+PLAYER_SPEED = 450 # the speed the player will move in pixels/sec
 PLAYER_HIT_RECT = pygame.Rect(0, 0, 32, 32)
 PLAYER_HIT_SOUND = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav', 'pain/12.wav', 'pain/13.wav', 'pain/14.wav', ]
 

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Poly(object):
     def __init__(self, points):
         self.points = points
@@ -109,28 +108,3 @@ class Poly(object):
             return False, pv
         else:
             return True, None
-
-
-#poly1 = Poly([(0,0),(10,0),(0,5)])
-#poly1 = Poly([(-0.5,-0.9),(9.5,-0.9),(-0.5,4.1)])
-#poly2 = Poly([(4,2),(10,2),(6,6)])
-
-#print(poly1.collidepoly(poly2))
-
-#collision, mpv = poly1.collidepoly(poly2)
-
-#print(mpv)
-#poly1 = poly1.move(mpv[0], mpv[1])
-#print(poly1.collidepoly(poly2))
-
-
-
-
-#p1 = [(0,0),(10,0),(0,5)]
-#p1 = [(-0.5,-0.9),(9.5,-0.9),(-0.5,4.1)]
-#p2 = [(4,2),(10,2),(6,6)]
-
-
-
-#a = collide(p1, p2)
-#print(a)
