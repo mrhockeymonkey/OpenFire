@@ -36,14 +36,14 @@ NIGHT_COLOR = (20, 20, 20)
 
 # Player
 PLAYER_HEALTH = 20
-PLAYER_IMAGE = 'rock1.png'
+PLAYER_SPRITESHEET = 'finn_and_jake.png'
 PLAYER_SPEED = 450 # the speed the player will move in pixels/sec
 PLAYER_HIT_RECT = pygame.Rect(0, 0, 32, 32)
 PLAYER_HIT_SOUND = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav', 'pain/12.wav', 'pain/13.wav', 'pain/14.wav', ]
 
 # Mob
 MOB_HEALTH = 100
-MOB_IMAGE = 'floating_eye.png'
+MOB_IMAGE = 'mithril_mutae.png'
 MOB_SPEED = 100
 MOB_HIT_RECT = pygame.Rect(0, 0, 24, 24)
 MOB_DAMAGE = 2

@@ -2,7 +2,7 @@ import pygame
 import sys
 from os import path
 from random import choice,random
-from hbf import sprites
+from hbf import sprites, player, enemy
 from hbf import environment
 from hbf import input
 from pygame.locals import * 
@@ -67,6 +67,15 @@ class Game:
         self.snd_dir = os.path.join(self.dir, '../snd')
         self.map_dir = os.path.join(self.dir, '../map')
 
+        # load sprite sheet images
+        self.spritesheets = {}
+        self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
+        self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
+        self.mob_ss_img = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
+        self.spritesheets['hypnoworm'] = pygame.image.load(os.path.join(self.img_dir, "hypno_worm.png"))
+        self.spritesheets['hypnoworm'] = pygame.transform.scale(self.spritesheets['hypnoworm'], (self.spritesheets['hypnoworm'].get_width()*2, self.spritesheets['hypnoworm'].get_height()*2))
+        
+
         # lighting effects
         self.fog = pygame.Surface((self.window_width, self.window_height))
         self.fog.fill(NIGHT_COLOR)
@@ -78,10 +87,7 @@ class Game:
         # font
         self.font = os.path.join(self.img_dir, 'ZOMBIE.TTF')
         
-        print(os.path.join(self.img_dir, PLAYER_IMAGE))
         
-        
-        self.player_image = pygame.image.load(os.path.join(self.img_dir, PLAYER_IMAGE)).convert_alpha()
 
 
         self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
@@ -94,7 +100,6 @@ class Game:
         self.bullet_images['sm'] = pygame.transform.scale(self.bullet_images['lg'], (10, 10))
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
-        self.mob_image = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
         
 
 
@@ -162,12 +167,14 @@ class Game:
         # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
             if tile_object.name == 'player':
-                self.player = sprites.Player(self, vec(tile_object.x , tile_object.y))
+                self.player = player.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
 
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'mob':
-                sprites.Mob(self, vec(tile_object.x, tile_object.y))
+                enemy.Magatia(self, vec(tile_object.x, tile_object.y))
+            if tile_object.name == 'hypnoworm':
+                enemy.HypnoWorm(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
                 print('here')
 
@@ -285,7 +292,7 @@ class Game:
 
         # draw sprites
         for sprite in self.all_sprites:
-            if isinstance(sprite, sprites.Mob):
+            if isinstance(sprite, enemy.Magatia):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
@@ -305,7 +312,7 @@ class Game:
                 #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
             for sprite in self.wall_sprites:
                 pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
-                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
+                #pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
             for sprite in self.bullet_sprites:
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
         

@@ -56,9 +56,9 @@
   <object id="9" name="chainsaw" x="2411.67" y="261.667" width="30" height="31.3333"/>
   <object id="10" name="health" x="1905" y="1206.33" width="30" height="31.3333"/>
   <object id="11" name="mob" x="3129" y="1246.33" width="30" height="31.3333"/>
-  <object id="12" name="mob1" x="3157" y="994.333" width="30" height="31.3333"/>
-  <object id="13" name="mob1" x="3065" y="788.333" width="30" height="31.3333"/>
-  <object id="14" name="mob1" x="2917" y="1090.33" width="30" height="31.3333"/>
+  <object id="12" name="hypnoworm" x="3157" y="994.333" width="30" height="31.3333"/>
+  <object id="13" name="hypnoworm" x="3065" y="788.333" width="30" height="31.3333"/>
+  <object id="14" name="hypnoworm" x="2917" y="1090.33" width="30" height="31.3333"/>
   <object id="17" name="wall" x="1791" y="571">
    <polygon points="0,0 100,-56 -1,70"/>
   </object>
