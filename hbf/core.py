@@ -59,13 +59,15 @@ class Game:
         if getattr(sys, 'frozen', False):
             print('running from bundle')
             self.dir = sys._MEIPASS
+            self.img_dir = os.path.join(self.dir, 'img')
+            self.snd_dir = os.path.join(self.dir, 'snd')
+            self.map_dir = os.path.join(self.dir, 'map')
         else:
             print('running from source')
             self.dir = os.path.dirname(__file__)
-        
-        self.img_dir = os.path.join(self.dir, '../img')
-        self.snd_dir = os.path.join(self.dir, '../snd')
-        self.map_dir = os.path.join(self.dir, '../map')
+            self.img_dir = os.path.join(self.dir, '../img')
+            self.snd_dir = os.path.join(self.dir, '../snd')
+            self.map_dir = os.path.join(self.dir, '../map')
 
         # load sprite sheet images
         self.spritesheets = {}

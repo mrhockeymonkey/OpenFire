@@ -5,7 +5,7 @@ http://www.nerdparadise.com/programming/pygamejoystick
 
 Debug Build (as folder and with console)
 ```
-pyinstaller .\main.py --add-data ".\img;img" --add-data ".\map;map"
+pyinstaller .\main.py --add-data ".\img;img" --add-data ".\map;map" --add-data ".\snd;snd"
 ```
 
 

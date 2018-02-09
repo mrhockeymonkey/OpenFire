@@ -148,7 +148,7 @@ class Enemy(Sprite):
         else:
             self.vel = vec(0,0)
         
-        print(self.rot)
+        #print(self.rot)
         #if 90 < self.rot < 180 or -180 < self.rot < -90:
         #    print('left')
         #if 0 < self.rot < 90 or -90 < self.rot < 0:
