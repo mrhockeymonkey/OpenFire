@@ -1,0 +1,2 @@
+# Pythagorean Theorem
+The distance between two points is calculated using pythag theorem i.e. a = sqrt(b**2 + c**2) but, the sqrt is uneccessary when you just want to compare so we can omit it for speed

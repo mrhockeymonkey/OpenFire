@@ -2,11 +2,15 @@ import pygame
 from pygame.locals import *
 from hbf import sprites
 from settings import *
+from random import choice
 
-class Magatia(sprites.Sprite):
+vec = pygame.math.Vector2
+
+class Magatia(sprites.Enemy):
     def __init__(self, game, pos):
-        self.groups = game.all_sprites, game.mob_sprites
+        # pick enemy image
         self.spritesheet = sprites.SpriteSheet(game.mob_ss_img) #copy?
+        self.spritesheet = sprites.SpriteSheet(game.spritesheets['magatia']) #copy?
         x = self.spritesheet.sheet.get_width() / 10
         sx = 9
         sy = 9
@@ -14,8 +18,8 @@ class Magatia(sprites.Sprite):
         y = self.spritesheet.sheet.get_height() / 4
         y = 80
         image = self.spritesheet.image_at((sx, sy, x, y), -1)
-        
-        sprites.Sprite.__init__(self, game, self.groups, MOB_LAYER, pos, image)  # inherit from Sprite
+        # inherit Enemy class
+        sprites.Enemy.__init__(self, game, pos, image)
         
         self.hit_rect = MOB_HIT_RECT.copy()
         self.refresh_hitbox()
@@ -42,42 +46,10 @@ class Magatia(sprites.Sprite):
         pygame.draw.rect(self.image, RED, health_bar)
         #pygame.draw.rect(self.game.screen, RED, health_bar)
 
-    def avoid_mobs(self):
-        for mob in self.game.mob_sprites:
-            if mob != self:
-                # if the vector from other mob to self is within the avoid radius, update acc
-                dist = self.pos - mob.pos
-                if 0 < dist.length() < MOB_AVOID_RADIUS: 
-                    self.acc += dist.normalize() #normalize = size of 1 so we just update direction
+
 
     def update(self):
-        target_distance = self.game.player.pos - self.pos
-        if target_distance.length_squared() < MOB_DETECT_RADIUS**2: #why?
-            # update target (player.pos - mob.pos is the vector FROM mob->player)
-            #self.target = self.game.player.pos - self.pos # the vector from mob to player
-            
-            # update image depending on location of target, i.e. always face the player. 
-            #if self.target.x < 0:
-            #    self.image = self.image_left
-            #elif self.target.x > 0:
-            #    self.image = self.image_right
-
-            # calcukate the rotation from x axis to player object
-            # angle_to get the angle between that vectore and the x axis
-            self.rot = target_distance.angle_to(vec(1,0))
-
-            # the acceleration is always in the direction of the player
-            self.acc = vec(1, 0).rotate(-self.rot)
-            self.avoid_mobs()
-            self.acc.scale_to_length(MOB_SPEED)
-            self.acc += self.vel * -1 # friction
-            
-            # Laws of motion: a = v/t or v = a*t
-            self.vel += self.acc * self.game.dt
-            
-            # ??? d = v*t
-            self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
-            #sself.rect.center = self.pos
+        super().update()
 
         # now that the sprite has been moved, test for collisions and correct
         self.refresh_hitbox()
@@ -98,15 +70,14 @@ class Magatia(sprites.Sprite):
             self.n = 'normal'
         self.image = self.strips[self.n].next()
 
-class HypnoWorm(sprites.Sprite):
+class HypnoWorm(sprites.Enemy):
     def __init__(self, game, pos):
-        self.groups = game.all_sprites, game.mob_sprites
+        # pick enemy image
         self.spritesheet = sprites.SpriteSheet(game.spritesheets['hypnoworm']) #copy?
-        x = self.spritesheet.sheet.get_width() / 10
-
         image = self.spritesheet.image_at((0, 35*2, 60*2, 45*2), -1)
-        
-        sprites.Sprite.__init__(self, game, self.groups, MOB_LAYER, pos, image)  # inherit from Sprite
+        # inherit Enemy class
+        sprites.Enemy.__init__(self, game, pos, image)
+
         
         self.hit_rect = MOB_HIT_RECT.copy()
         self.refresh_hitbox()
@@ -126,3 +97,99 @@ class HypnoWorm(sprites.Sprite):
         }
         self.n = 'idle'
         self.strips[self.n].iter()
+
+    def draw_health(self):
+        width = int(self.rect.width  * self.health / MOB_HEALTH)
+        health_bar = pygame.Rect(0, 0, width, 7)
+        pygame.draw.rect(self.image, RED, health_bar)
+        #pygame.draw.rect(self.game.screen, RED, health_bar)
+
+
+    def update(self):
+        super().update()
+
+        # now that the sprite has been moved, test for collisions and correct
+        self.refresh_hitbox()
+        self.correct_collision(self, self.game.wall_sprites)
+        self.refresh_hitbox()
+
+        # keep the image and hit box together always
+        self.rect.center = self.hit_rect.center
+
+        if self.health <= 0:
+            choice(self.game.mob_hit_sounds).play()
+            self.kill()
+            self.game.map_img.blit(self.game.splat_image, self.pos)
+
+        if self.vel.length() != 0:
+            self.n = 'idle'
+        else:
+            self.n = 'idle'
+        self.image = self.strips[self.n].next()
+
+
+class Homun(sprites.Enemy):
+    def __init__(self, game, pos):
+        # pick enemy image
+        self.spritesheet = sprites.SpriteSheet(game.spritesheets['homun']) #copy?
+        image = self.spritesheet.image_at((9, 9, 65, 60), -1)
+        # inherit Enemy class
+        sprites.Enemy.__init__(self, game, pos, image)
+        
+        self.hit_rect = MOB_HIT_RECT.copy()
+        self.refresh_hitbox()
+        #self.hit_rect.center = self.rect.center
+        #self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
+        self.health = MOB_HEALTH
+        self.target = self.game.player
+
+        self.strips = {
+            'sleep': sprites.SpriteStripAnim(self.spritesheet, (9, 9, 64, 60), 4, colorkey=-1, loop=True,frames=20),
+            'idle': sprites.SpriteStripAnim(self.spritesheet, (265, 4, 64, 70), 4, colorkey=-1, loop=True,frames=20),
+            'move': sprites.SpriteStripAnim(self.spritesheet, (7, 80, 67, 90), 6, colorkey=-1, loop=True,frames=10), #+
+                    #sprites.SpriteStripAnim(self.spritesheet, (201, 85, 70, 90), 3, colorkey=-1, loop=True,frames=10),
+            'attack': sprites.SpriteStripAnim(self.spritesheet, (201, 85, 70, 90), 3, colorkey=-1, loop=True,frames=10),
+            'hit': sprites.SpriteStripAnim(self.spritesheet, (7, 80, 67, 92), 3, colorkey=-1, loop=True,frames=10),
+            'die': sprites.SpriteStripAnim(self.spritesheet, (0, 276, 90, 92), 3, colorkey=-1, loop=False,frames=8) + 
+                sprites.SpriteStripAnim(self.spritesheet, (270, 276, 97, 92), 3, colorkey=-1, loop=False,frames=8)
+        }
+        self.n = 'idle'
+        self.strips[self.n].iter()
+
+
+    def update(self):
+        super().update()
+
+        # now that the sprite has been moved, test for collisions and correct
+        self.refresh_hitbox()
+        self.correct_collision(self, self.game.wall_sprites)
+        self.refresh_hitbox()
+
+        # keep the image and hit box together always
+        self.rect.center = self.hit_rect.center
+
+
+        if self.vel.length() != 0:
+            self.n = 'move'
+        else:
+            self.n = 'idle'
+        #if target_distance.length_squared() < MOB_ATTACK_RADIUS**2:
+        #    self.n = 'attack'
+        if self.health <= 0:
+            choice(self.game.mob_hit_sounds).play()
+            self.vel = vec(0,0)
+            self.n = 'die'
+            #self.kill()
+            #self.game.map_img.blit(self.game.splat_image, self.pos)
+        try:
+            self.image = self.strips[self.n].next()
+        except StopIteration as err:
+            if self.n == 'die':
+                self.kill()
+                self.game.map_img.blit(self.game.splat_image, self.pos)
+            else:
+                raise err
+
+        self.rect.width = self.image.get_width()
+        self.rect.height = self.image.get_height()
+        

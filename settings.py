@@ -6,7 +6,7 @@ import pygame
 #Genral
 FPS = 60
 CAMERASLACK = 90
-DEBUG = True
+DEBUG = False
 
 #Colours  R    G    B
 BLACK  = (0  , 0  , 0  )
@@ -50,6 +50,7 @@ MOB_DAMAGE = 2
 MOB_KNOCKBACK = 20
 MOB_AVOID_RADIUS = 50
 MOB_DETECT_RADIUS = 300 # the distance a mob can detect player
+MOB_ATTACK_RADIUS = 150 # the distance a mob can attack a player from
 MOB_HIT_SOUND = ['splat-15.wav']
 
 # Weapons

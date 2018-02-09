@@ -4,7 +4,6 @@ from random import uniform, randint, choice
 import pytweening as tween
 #import pylygon
 from settings import *
-from itertools import chain
 from hbf import animation
 from hbf import polygon
 
@@ -113,7 +112,47 @@ class Sprite(pygame.sprite.Sprite):
             sprite.pos.y = sprite.pos.y + mpv[1]
             sprite.vel.x = 0
             
+class Enemy(Sprite):
+    def __init__(self, game, pos, image):
+        self.groups = game.all_sprites, game.mob_sprites
+        self.layer = MOB_LAYER
+        Sprite.__init__(self, game, self.groups, self.layer, pos, image)
+        self.action = 'idle'
 
+    def avoid_mobs(self):
+        for mob in self.game.mob_sprites:
+            if mob != self:
+                # if the vector from other mob to self is within the avoid radius, update acc
+                dist = self.pos - mob.pos
+                if 0 < dist.length() < MOB_AVOID_RADIUS: 
+                    self.acc += dist.normalize() #normalize = size of 1 so we just update direction
+
+    def draw_health(self):
+        width = int(self.rect.width  * self.health / MOB_HEALTH)
+        health_bar = pygame.Rect(0, 0, width, 7)
+        pygame.draw.rect(self.image, RED, health_bar)
+        #pygame.draw.rect(self.game.screen, RED, health_bar)
+
+    def update(self):
+        # move when player in range
+        self.target_distance = self.game.player.pos - self.pos
+        if self.target_distance.length_squared() < MOB_DETECT_RADIUS**2: # See notes on Pythagorean theorem
+            # calculate the rotation from x axis to player object
+            self.rot = self.target_distance.angle_to(vec(1,0))
+            self.acc = vec(1, 0).rotate(-self.rot) # accelerate in the direction of the player
+            self.avoid_mobs() # avoid other sprites
+            self.acc.scale_to_length(MOB_SPEED) 
+            self.acc += self.vel * -1 # simulate friction
+            self.vel += self.acc * self.game.dt # Laws of motion: a = v/t or v = a*t
+            self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2 # ??? d = v*t
+        else:
+            self.vel = vec(0,0)
+        
+        print(self.rot)
+        #if 90 < self.rot < 180 or -180 < self.rot < -90:
+        #    print('left')
+        #if 0 < self.rot < 90 or -90 < self.rot < 0:
+        #    print('right')
 
 
 class Obstacle(Sprite):
@@ -168,7 +207,8 @@ class Bullet(Sprite):
         self.rect.center = self.pos
 
         if pygame.sprite.spritecollideany(self, self.game.wall_sprites):
-            self.kill()
+            print('bullet hit wall    ')
+            #self.kill()
 
         # check to see if bullet lifetime has passed
         if pygame.time.get_ticks() - self.spawn_time > WEAPONS[self.game.player.weapon]['lifetime']:
@@ -214,7 +254,7 @@ class SpriteSheet(object):
     def image_at(self, rectangle, colorkey = None):
         "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert() #create new surface
+        image = pygame.Surface(rect.size).convert_alpha() #create new surface
         image.fill(self.sheet.get_at((0,0))) # fill original image background
         image.blit(self.sheet, (0, 0), rect) # blit portion of sprite sheet
         if colorkey is not None:

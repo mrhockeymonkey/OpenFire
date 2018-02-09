@@ -2,6 +2,8 @@ import pygame
 from pygame.locals import *
 from hbf import sprites
 from settings import *
+from itertools import chain
+from random import choice
 
 vec = pygame.math.Vector2
 
@@ -93,7 +95,7 @@ class Player(sprites.Sprite):
             dir = vec(1,0).rotate(-self.rot)
             
             for i in range(WEAPONS[self.weapon]['count']):
-                Bullet(self.game, self.pos, dir, WEAPONS[self.weapon]['damage'])
+                sprites.Bullet(self.game, self.pos, dir, WEAPONS[self.weapon]['damage'])
                 snd = choice(self.game.weapon_sounds[self.weapon])
                 if snd.get_num_channels() > 2:
                     snd.stop()
@@ -101,7 +103,7 @@ class Player(sprites.Sprite):
             #kick back
             #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
             #muzzle flash
-            MuzzleFlash(self.game, self.pos)
+            sprites.MuzzleFlash(self.game, self.pos)
 
     # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):

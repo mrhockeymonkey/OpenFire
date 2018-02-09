@@ -75,6 +75,10 @@ class Game:
         self.spritesheets['hypnoworm'] = pygame.image.load(os.path.join(self.img_dir, "hypno_worm.png"))
         self.spritesheets['hypnoworm'] = pygame.transform.scale(self.spritesheets['hypnoworm'], (self.spritesheets['hypnoworm'].get_width()*2, self.spritesheets['hypnoworm'].get_height()*2))
         
+        self.spritesheets['homun'] = pygame.image.load(os.path.join(self.img_dir, "homun.png"))
+        self.spritesheets['magatia'] = pygame.image.load(os.path.join(self.img_dir, "mithril_mutae.png"))
+        #self.spritesheets['homun'] = pygame.transform.scale(self.spritesheets['homun'], (self.spritesheets['homun'].get_width()*2, self.spritesheets['hypnoworm'].get_height()*2))
+        
 
         # lighting effects
         self.fog = pygame.Surface((self.window_width, self.window_height))
@@ -175,6 +179,8 @@ class Game:
                 enemy.Magatia(self, vec(tile_object.x, tile_object.y))
             if tile_object.name == 'hypnoworm':
                 enemy.HypnoWorm(self, vec(tile_object.x, tile_object.y))
+            if tile_object.name == 'homun':
+                enemy.Homun(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
                 print('here')
 
@@ -230,6 +236,9 @@ class Game:
                 if event.key == pygame.K_n:
                     self.night = not self.night
                     print('night ' +  str(self.night))
+                if event.key == pygame.K_q:
+                    self.draw_debug = not self.draw_debug
+                    print('debug ' +  str(self.draw_debug))
 
     def update(self):
         # call the update method on all sprites

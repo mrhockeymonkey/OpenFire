@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="22">
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="25">
  <tileset firstgid="1" source="kenney-prototype-tileset.tsx"/>
  <layer name="floor" width="20" height="20">
   <data encoding="csv">
@@ -68,5 +68,8 @@
   <object id="21" name="wall" x="2560" y="126">
    <polygon points="0,0 -95,55 -1,53"/>
   </object>
+  <object id="22" name="homun" x="1758" y="833.333" width="30" height="31.3333"/>
+  <object id="23" name="homun" x="1919" y="1020.33" width="30" height="31.3333"/>
+  <object id="24" name="homun" x="1728" y="1003.33" width="30" height="31.3333"/>
  </objectgroup>
 </map>
