@@ -126,10 +126,6 @@ class Player(sprites.Sprite):
         self.refresh_hitbox()
 
 
-
-        # keep the image and hit box together always
-        self.rect.center = self.hit_rect.center
-
         #self.n += 1
         #if self.n >= len(self.strips):
         #    self.n = 0

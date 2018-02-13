@@ -97,6 +97,7 @@ class Sprite(pygame.sprite.Sprite):
         """updates the hit_rect and hit_poly to the sprite current pos"""
         self.hit_rect.center = self.pos
         self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
+        self.rect.center = self.hit_rect.center
 
     def correct_collision(self, sprite, group):
         """Adjust the position of the sprite so that it does not collide with the group. i.e. to stop sprite
@@ -117,7 +118,10 @@ class Enemy(Sprite):
         self.groups = game.all_sprites, game.mob_sprites
         self.layer = MOB_LAYER
         Sprite.__init__(self, game, self.groups, self.layer, pos, image)
+
+        # start in idle state, actions MUST be defined in the instance inheriting Enemy()
         self.action = 'idle'
+        self.actions[self.action].iter()
 
     def avoid_mobs(self):
         for mob in self.game.mob_sprites:
@@ -133,7 +137,11 @@ class Enemy(Sprite):
         pygame.draw.rect(self.image, RED, health_bar)
         #pygame.draw.rect(self.game.screen, RED, health_bar)
 
-    def update(self):
+    def hit(self):
+        self.action = 'hit'
+        self.actions[self.action].iter()
+
+    def update_pos(self):
         # move when player in range
         self.target_distance = self.game.player.pos - self.pos
         if self.target_distance.length_squared() < MOB_DETECT_RADIUS**2: # See notes on Pythagorean theorem
@@ -145,9 +153,40 @@ class Enemy(Sprite):
             self.acc += self.vel * -1 # simulate friction
             self.vel += self.acc * self.game.dt # Laws of motion: a = v/t or v = a*t
             self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2 # ??? d = v*t
+            self.refresh_hitbox()
+            self.correct_collision(self, self.game.wall_sprites) # now that the sprite has been moved, test for collisions and correct
+            self.refresh_hitbox()
         else:
             self.vel = vec(0,0)
-        
+
+    def update_img(self):
+        if self.health <= 0:
+            choice(self.game.mob_hit_sounds).play()
+            self.vel = vec(0,0)
+            self.action = 'die'
+
+        if self.action != 'hit' and self.action != 'die':
+            if self.vel.length() != 0:
+                self.action = 'move'
+            else:
+                self.action = 'idle'
+
+        try:
+            self.image = self.actions[self.action].next()
+        except StopIteration as err:
+            if self.action == 'die':
+                self.kill()
+                self.game.map_img.blit(self.game.splat_image, self.pos)
+            elif self.action == 'hit':
+                self.action = 'move'
+            else:
+                raise err
+
+    def update(self):
+        self.update_pos()
+        self.update_img()
+
+
         #print(self.rot)
         #if 90 < self.rot < 180 or -180 < self.rot < -90:
         #    print('left')
@@ -254,7 +293,7 @@ class SpriteSheet(object):
     def image_at(self, rectangle, colorkey = None):
         "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
-        image = pygame.Surface(rect.size).convert_alpha() #create new surface
+        image = pygame.Surface(rect.size).convert() #create new surface
         image.fill(self.sheet.get_at((0,0))) # fill original image background
         image.blit(self.sheet, (0, 0), rect) # blit portion of sprite sheet
         if colorkey is not None:

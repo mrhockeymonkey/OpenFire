@@ -73,14 +73,10 @@ class Game:
         self.spritesheets = {}
         self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
         self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
-        self.mob_ss_img = pygame.image.load(os.path.join(self.img_dir, MOB_IMAGE))
-        self.spritesheets['hypnoworm'] = pygame.image.load(os.path.join(self.img_dir, "hypno_worm.png"))
-        self.spritesheets['hypnoworm'] = pygame.transform.scale(self.spritesheets['hypnoworm'], (self.spritesheets['hypnoworm'].get_width()*2, self.spritesheets['hypnoworm'].get_height()*2))
-        
+
+        self.spritesheets['rumo'] = pygame.image.load(os.path.join(self.img_dir, "rumo.png"))
         self.spritesheets['homun'] = pygame.image.load(os.path.join(self.img_dir, "homun.png"))
-        self.spritesheets['magatia'] = pygame.image.load(os.path.join(self.img_dir, "mithril_mutae.png"))
-        #self.spritesheets['homun'] = pygame.transform.scale(self.spritesheets['homun'], (self.spritesheets['homun'].get_width()*2, self.spritesheets['hypnoworm'].get_height()*2))
-        
+        self.spritesheets['homunculus'] = pygame.image.load(os.path.join(self.img_dir, "homunculus.png"))
 
         # lighting effects
         self.fog = pygame.Surface((self.window_width, self.window_height))
@@ -177,10 +173,10 @@ class Game:
             if tile_object.name == 'wall':
 
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
-            if tile_object.name == 'mob':
-                enemy.Magatia(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name == 'hypnoworm':
-                enemy.HypnoWorm(self, vec(tile_object.x, tile_object.y))
+            if tile_object.name == 'rumo':
+                enemy.Rumo(self, vec(tile_object.x, tile_object.y))
+            if tile_object.name == 'homunculus':
+                enemy.Homunculus(self, vec(tile_object.x, tile_object.y))
             if tile_object.name == 'homun':
                 enemy.Homun(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
@@ -291,6 +287,7 @@ class Game:
             # decrement health by damange * # of bullets that hit
             #hit.health -= WEAPONS[self.player.weapon]['damage'] * len(hits[hit])
             for bullet in hits[mob]:
+                mob.hit()
                 mob.health -= bullet.dmg
             # stall sprite to simulate stopping power of bullet
             mob.vel = vec(0, 0)
@@ -303,7 +300,7 @@ class Game:
 
         # draw sprites
         for sprite in self.all_sprites:
-            if isinstance(sprite, enemy.Magatia):
+            if isinstance(sprite, sprites.Enemy):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="25">
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="28">
  <tileset firstgid="1" source="kenney-prototype-tileset.tsx"/>
  <layer name="floor" width="20" height="20">
   <data encoding="csv">
@@ -55,10 +55,10 @@
   <object id="8" name="shotgun" x="2240.33" y="366.333" width="30" height="31.3333"/>
   <object id="9" name="chainsaw" x="2411.67" y="261.667" width="30" height="31.3333"/>
   <object id="10" name="health" x="1905" y="1206.33" width="30" height="31.3333"/>
-  <object id="11" name="mob" x="3129" y="1246.33" width="30" height="31.3333"/>
-  <object id="12" name="hypnoworm" x="3157" y="994.333" width="30" height="31.3333"/>
-  <object id="13" name="hypnoworm" x="3065" y="788.333" width="30" height="31.3333"/>
-  <object id="14" name="hypnoworm" x="2917" y="1090.33" width="30" height="31.3333"/>
+  <object id="11" name="rumo" x="2799" y="1165.33" width="30" height="31.3333"/>
+  <object id="12" name="homunculus" x="3058" y="742.333" width="30" height="31.3333"/>
+  <object id="13" name="homunculus" x="3055" y="574.333" width="30" height="31.3333"/>
+  <object id="14" name="homunculus" x="3061" y="899.33" width="30" height="31.3333"/>
   <object id="17" name="wall" x="1791" y="571">
    <polygon points="0,0 100,-56 -1,70"/>
   </object>
@@ -68,8 +68,11 @@
   <object id="21" name="wall" x="2560" y="126">
    <polygon points="0,0 -95,55 -1,53"/>
   </object>
-  <object id="22" name="homun" x="1758" y="833.333" width="30" height="31.3333"/>
-  <object id="23" name="homun" x="1919" y="1020.33" width="30" height="31.3333"/>
-  <object id="24" name="homun" x="1728" y="1003.33" width="30" height="31.3333"/>
+  <object id="22" name="homun" x="1013" y="428.333" width="30" height="31.3333"/>
+  <object id="23" name="homun" x="2570" y="679.333" width="30" height="31.3333"/>
+  <object id="24" name="homun" x="1015" y="585.333" width="30" height="31.3333"/>
+  <object id="25" name="rumo" x="2543" y="1167.33" width="30" height="31.3333"/>
+  <object id="26" name="rumo" x="3020" y="1218.33" width="30" height="31.3333"/>
+  <object id="27" name="rumo" x="2618" y="1041.33" width="30" height="31.3333"/>
  </objectgroup>
 </map>
