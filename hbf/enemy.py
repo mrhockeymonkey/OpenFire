@@ -41,14 +41,10 @@ class Homunculus(sprites.Enemy):
         # pick an initial image
         image = self.spritesheet.image_at((0, 35*2, 60*2, 45*2), -1)
         self.actions = {
-            #attack': sprites.SpriteStripAnim(self.spritesheet, (0, sy, x, y), 6, colorkey=-1, loop=True,frames=10),
-            'idle': sprites.SpriteStripAnim(self.spritesheet, (0, 35*2, 60*2, 45*2), 6, colorkey=-1, loop=True,frames=10),
-            'die': sprites.SpriteStripAnim(self.spritesheet, (0, 35*2, 60*2, 45*2), 6, colorkey=-1, loop=True,frames=10)
-
-            #'down': SpriteStripAnim(self.spritesheet, (0, 0, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'left': SpriteStripAnim(self.spritesheet, (0, y, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'right': SpriteStripAnim(self.spritesheet, (0, 2*y, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'up': SpriteStripAnim(self.spritesheet, (0, 3*y, x, y), 4, colorkey=-1, loop=True,  frames=15 )
+            'idle': sprites.SpriteStripAnim(self.spritesheet, (2, 0, 88, 122), 6, colorkey=-1, loop=True,frames=10),
+            'move': sprites.SpriteStripAnim(self.spritesheet, (2, 121, 90, 124), 6, colorkey=-1, loop=True,frames=10),
+            'die': sprites.SpriteStripAnim(self.spritesheet, (10, 370, 110, 138), 4, colorkey=-1, loop=False,frames=10),
+            'hit': sprites.SpriteStripAnim(self.spritesheet, (10, 370, 110, 138), 1, colorkey=-1, loop=False,frames=12)
         }
         # inherit Enemy class
         sprites.Enemy.__init__(self, game, pos, image)

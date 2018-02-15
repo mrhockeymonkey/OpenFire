@@ -122,6 +122,7 @@ class Enemy(Sprite):
         # start in idle state, actions MUST be defined in the instance inheriting Enemy()
         self.action = 'idle'
         self.actions[self.action].iter()
+        self.facing = 'left'
 
     def avoid_mobs(self):
         for mob in self.game.mob_sprites:
@@ -186,12 +187,17 @@ class Enemy(Sprite):
         self.update_pos()
         self.update_img()
 
-
-        #print(self.rot)
-        #if 90 < self.rot < 180 or -180 < self.rot < -90:
-        #    print('left')
-        #if 0 < self.rot < 90 or -90 < self.rot < 0:
-        #    print('right')
+        if 90 < self.rot < 180 or -180 < self.rot < -90: #player is to the left
+            if self.facing == 'left':
+                pass
+            else:
+                self.image = pygame.transform.flip(self.image, True, False)
+        if 0 < self.rot < 90 or -90 < self.rot < 0: # player is to the right
+            if self.facing == 'right':
+                pass
+            else:
+                self.image = pygame.transform.flip(self.image, True, False)
+            
 
 
 class Obstacle(Sprite):

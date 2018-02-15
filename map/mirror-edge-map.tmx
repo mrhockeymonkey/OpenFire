@@ -69,7 +69,7 @@
    <polygon points="0,0 -95,55 -1,53"/>
   </object>
   <object id="22" name="homun" x="1013" y="428.333" width="30" height="31.3333"/>
-  <object id="23" name="homun" x="2570" y="679.333" width="30" height="31.3333"/>
+  <object id="23" name="homun" x="1889" y="1092.33" width="30" height="31.3333"/>
   <object id="24" name="homun" x="1015" y="585.333" width="30" height="31.3333"/>
   <object id="25" name="rumo" x="2543" y="1167.33" width="30" height="31.3333"/>
   <object id="26" name="rumo" x="3020" y="1218.33" width="30" height="31.3333"/>
