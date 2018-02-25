@@ -2,7 +2,7 @@ import pygame
 import sys
 from os import path
 from random import choice,random
-from hbf import sprites, player, enemy
+from hbf import sprites, player, enemy, mob
 from hbf import environment
 from hbf import input
 from pygame.locals import * 
@@ -184,9 +184,14 @@ class Game:
 
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
 
+        self.spawn_points = [obj for obj in self.map.tmxdata.objects if obj.name == 'spawn']
+        
         self.hud = environment.Hud(self.player, 10, 10)
             
         self.effects_sounds['level_start'].play()
+
+        self.current_mob = mob.Mob(self, 40)
+
 
 
     def run(self):

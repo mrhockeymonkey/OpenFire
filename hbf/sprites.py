@@ -199,7 +199,6 @@ class Enemy(Sprite):
                 self.image = pygame.transform.flip(self.image, True, False)
             
 
-
 class Obstacle(Sprite):
     def __init__(self, game, pos, w, h):
         self.groups = game.wall_sprites

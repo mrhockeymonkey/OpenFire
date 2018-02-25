@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="28">
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="20" height="20" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="29">
  <tileset firstgid="1" source="kenney-prototype-tileset.tsx"/>
  <layer name="floor" width="20" height="20">
   <data encoding="csv">
@@ -70,9 +70,10 @@
   </object>
   <object id="22" name="homun" x="1013" y="428.333" width="30" height="31.3333"/>
   <object id="23" name="homun" x="1889" y="1092.33" width="30" height="31.3333"/>
-  <object id="24" name="homun" x="1015" y="585.333" width="30" height="31.3333"/>
+  <object id="24" name="spawn" x="1382" y="975.333" width="30" height="31.3333"/>
   <object id="25" name="rumo" x="2543" y="1167.33" width="30" height="31.3333"/>
   <object id="26" name="rumo" x="3020" y="1218.33" width="30" height="31.3333"/>
   <object id="27" name="rumo" x="2618" y="1041.33" width="30" height="31.3333"/>
+  <object id="28" name="homun" x="1018" y="582.333" width="30" height="31.3333"/>
  </objectgroup>
 </map>
