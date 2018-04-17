@@ -6,7 +6,7 @@ import pygame
 #Genral
 FPS = 60
 CAMERASLACK = 90
-DEBUG = False
+DEBUG = True
 
 #Colours  R    G    B
 BLACK  = (0  , 0  , 0  )
@@ -21,7 +21,9 @@ CYAN   = (0  , 255, 255)
 MAP = 'grasslands_1.tmx'
 #MAP = 'C:/Users/Scott/Downloads/Kenney Isometric Assets version 3/Prototype pack/Tiled/tiledTemplate_isometric.tmx'
 MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/mirror-edge-map.tmx"
-MAP_Y_OFFSET = 363 # the distance the map will be moved up when rendered to cut out empty space and position items correctly. This is to take into account the large tile heights in kenney assets. Calculated as tileset height - map tile height
+MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/lab_map_1.tmx"
+MAP_CLIP_TOP = 365 # fudged ammount of whitespace to cut fromm the top of map to align objects correctly
+
 BG_MUSIC = 'music/espionage.ogg'
 GAME_SOUNDS = {
     'level_start': 'level_start.wav',

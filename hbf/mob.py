@@ -5,6 +5,9 @@ from random import choice, randint
 vec = pygame.math.Vector2
 
 class Mob():
+    """
+    Groups of enemy sprites that can be spawned in waves continuously
+    """
     def __init__(self, game, count):
         self.game = game
         self.count = count

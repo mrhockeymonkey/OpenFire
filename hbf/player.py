@@ -17,101 +17,71 @@ class Player(sprites.Sprite):
 
     def __init__(self, game, pos):
         self.groups = game.all_sprites
-        
-        self.spritesheet = sprites.SpriteSheet(game.player_ss_img)
-        x = self.spritesheet.sheet.get_width() / 4
-        y = self.spritesheet.sheet.get_height() / 4
-        image = self.spritesheet.image_at((0, 50, 130, 130), -1)
-        sprites.Sprite.__init__(self, game, self.groups, PLAYER_LAYER, pos, image) # inherit from Sprite
-        
+        self.ssheets = {
+            'attack': sprites.SpriteSheet(game.images['finn_and_jake_sword_combo']),
+            'idle'  : sprites.SpriteSheet(game.images['finn_and_jake_idle']),
+            'run'  : sprites.SpriteSheet(game.images['finn_and_jake_run'])
+        }
+        self.actions = {
+            'attack': sprites.SpriteStripAnim(self.ssheets['attack'], (15, 0, 115, 90), 14, colorkey=-1,loop=False, frames=4),
+            'idle': sprites.SpriteStripAnim(self.ssheets['idle'], (0, 0, 66, 65), 12, colorkey=-1, loop=True,  frames=7 ),
+            'run': sprites.SpriteStripAnim(self.ssheets['run'], (0, 0, 54, 65), 12, colorkey=-1, loop=True,  frames=7 )
+        }
+        self.action = 'idle'
+        init_image = self.actions[self.action].images[0]
+        sprites.Sprite.__init__(self, game, self.groups, PLAYER_LAYER, pos, init_image) # inherit from Sprite
         self.hit_rect = PLAYER_HIT_RECT.copy() 
-        self.refresh_hitbox()
-        
-        #self.hit_rect.center = self.rect.center
-        #self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
-        
-        self.last_shot = 0
         self.health = PLAYER_HEALTH
         self.max_health = PLAYER_HEALTH
-
-        self.weapon = 'pistol'
         self.damaged = False
-
-        self.weaponn = sprites.Weapon(self.game, self.pos)
-
-        #self.ss = SpriteSheet(os.path.join('C:/Users/Scott/OneDrive/Code/HappyBattleFactor/img', 'steampunk_f12.png'))
-        #self.sprite_sheet = SpriteSheet(self.game.player_image)
-        x = self.spritesheet.sheet.get_width() / 4
-        y = self.spritesheet.sheet.get_height() / 4
-        self.strips = {
-            'idle': sprites.SpriteStripAnim(self.spritesheet, (0, 25*2, 66*2, 65*2), 12, colorkey=-1, loop=True,  frames=7 ),
-            'run': sprites.SpriteStripAnim(self.spritesheet, (0, 860*2, 54*2, 65*2), 12, colorkey=-1, loop=True,  frames=7 )
-            #'down': sprites.SpriteStripAnim(self.spritesheet, (0, 0, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'left': sprites.SpriteStripAnim(self.spritesheet, (0, y, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'right': sprites.SpriteStripAnim(self.spritesheet, (0, 2*y, x, y), 4, colorkey=-1, loop=True,  frames=15 ),
-            #'up': sprites.SpriteStripAnim(self.spritesheet, (0, 3*y, x, y), 4, colorkey=-1, loop=True,  frames=15 )
-        }
+        self.facing = 'right'
         
-        self.n = 'idle'
-        self.strips[self.n].iter()
-        
-        #self.image = game.player_ss_img
-        #self.image = self.strips[self.n].next()
+        self.actions[self.action].iter()
+        self.refresh_hitbox()
         self.rect = self.image.get_rect()
-        #self.image = self.strips[self.n].next()
-        #self.image = pygame.transform.scale(self.image, (50,50))
 
-    def _get_keys(self):
-        self.vel = vec(0, 0)
+    def move(self, dir):
+        # update action
+        self.action = 'run'
 
-        keys = pygame.key.get_pressed()
-        if keys[K_LEFT] or keys[K_a]:
-            self.vel.x = -PLAYER_SPEED
-            self.n = 'run'
-        if keys[K_RIGHT] or keys[K_d]:
+        # update velocity and direction
+        if dir == 'R':
             self.vel.x = PLAYER_SPEED
-            self.n = 'run'
-        if keys[K_UP] or keys[K_w]:
+            self.facing = 'right'
+        elif dir == 'L':
+            self.vel.x = -PLAYER_SPEED
+            self.facing = 'left'
+        elif dir == 'U':
             self.vel.y = -PLAYER_SPEED
-            self.n = 'run'
-        if keys[K_DOWN] or keys[K_s]:
+        elif dir == 'D':
             self.vel.y = PLAYER_SPEED
-            self.n = 'run'
-        # to stop faster diagonal movement need to multipy by square root of 2
+        else:
+            raise ValueError("Value for 'dir' must be either 'U', 'D', 'L', or 'R'")
+
+        # fix diagonal movement speed
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= 0.7071
 
-        if keys[K_SPACE]:
-            self.shoot()
+    def stop(self):
+        self.action = 'idle'
+        self.vel = vec(0,0)
 
     def hit(self):
         self.damaged = True
         self.damage_alpha = chain(DAMAGE_ALPHA * 4)
 
-    def shoot(self):
-        now = pygame.time.get_ticks()
-        if now - self.last_shot > WEAPONS[self.weapon]['rate']:
-            self.last_shot = now
-            dir = vec(1,0).rotate(-self.rot)
-            
-            for i in range(WEAPONS[self.weapon]['count']):
-                sprites.Bullet(self.game, self.pos, dir, WEAPONS[self.weapon]['damage'])
-                snd = choice(self.game.weapon_sounds[self.weapon])
-                if snd.get_num_channels() > 2:
-                    snd.stop()
-                snd.play()
-            #kick back
-            #self.vel = vec(-BULLET_KICKBACK).rotate(-self.rot)
-            #muzzle flash
-            sprites.MuzzleFlash(self.game, self.pos)
+    def attack(self):
+        self.action = 'attack'
+        self.actions[self.action].iter()
 
-    # update is called once every loop before drawing to enact any outstanding changes to the player object
     def update(self):
+        """ update is called once every loop before drawing to enact any outstanding changes to the player object"""
         # get keys to determine velocity
-        self._get_keys()
+        #self._get_keys()
 
         # update sprite pos (distance = velocity * time), this gives smooth movement independant of frame rate
         self.pos += self.vel * self.game.dt
+
         #self.image = self.game.player_image.copy() #tis
         if self.damaged:
             try:
@@ -123,6 +93,7 @@ class Player(sprites.Sprite):
         # now that the sprite has been moved, test for collisions and correct
         self.refresh_hitbox()
         self.correct_collision(self, self.game.wall_sprites)
+        self.correct_offmap(self)
         self.refresh_hitbox()
 
 
@@ -133,7 +104,14 @@ class Player(sprites.Sprite):
         #if self.vel != 0:
 
         #if self.vel.length() != 0:
-        self.image = self.strips[self.n].next()
-        keys = pygame.key.get_pressed()
-        if keys[K_LEFT] or keys[K_a]:
+        try:
+            self.image = self.actions[self.action].next()
+        except StopIteration as err:
+            if self.action == 'attack':
+                self.action = 'idle'
+            else:
+                raise err
+
+        # flip image if facing left
+        if self.facing == 'left':
             self.image = pygame.transform.flip(self.image, True, False)

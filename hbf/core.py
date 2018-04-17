@@ -25,6 +25,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.draw_debug = DEBUG 
         self.exit = False
+        self.temp = 0
 
         # loading files
         self.load_data()
@@ -71,6 +72,12 @@ class Game:
 
         # load sprite sheet images
         self.spritesheets = {}
+        
+        self.images = {}
+        self.images['finn_and_jake_sword_combo'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_sword_combo.png"))
+        self.images['finn_and_jake_idle'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_idle.png"))
+        self.images['finn_and_jake_run'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_run.png"))
+        
         self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
         self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
 
@@ -152,8 +159,7 @@ class Game:
         self.night = False
         
         self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
-        self.map_img = self.map.make_map()
-        self.map_rect = self.map_img.get_rect()
+        self.map.make_map()
         
         self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
@@ -171,7 +177,6 @@ class Game:
             if tile_object.name == 'player':
                 self.player = player.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
-
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'rumo':
                 enemy.Rumo(self, vec(tile_object.x, tile_object.y))
@@ -190,7 +195,7 @@ class Game:
             
         self.effects_sounds['level_start'].play()
 
-        self.current_mob = mob.Mob(self, 40)
+        self.current_mob = mob.Mob(self, 5)
 
 
 
@@ -216,19 +221,22 @@ class Game:
             self.show_gameover_screen()
 
     def events(self):
-        #Game loop - events
-        #num_joysticks = pygame.joystick.get_count()
-        
-        #pygame.joystick.quit()
-        #pygame.joystick.init()
+        """
+        game loop events
+        """
 
-        #for event in self.input_manager.get_events():
-        #    print(event.key)
+        # first check to see what keys are pressed down to track movement
+        keys = pygame.key.get_pressed()
+        if keys[K_LEFT] or keys[K_a]:
+            self.player.move('L')
+        if keys[K_RIGHT] or keys[K_d]:
+            self.player.move('R')
+        if keys[K_UP] or keys[K_w]:
+            self.player.move('U')
+        if keys[K_DOWN] or keys[K_s]:
+            self.player.move('D')
 
-            #if event.key == 'A' and event.down:
-            #    print('A')
-
-
+        # second look for other events
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
@@ -242,6 +250,11 @@ class Game:
                 if event.key == pygame.K_q:
                     self.draw_debug = not self.draw_debug
                     print('debug ' +  str(self.draw_debug))
+                if event.key in [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_UP, pygame.K_DOWN]:
+                    self.player.stop()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.player.attack()
 
     def update(self):
         # call the update method on all sprites
@@ -297,11 +310,10 @@ class Game:
             # stall sprite to simulate stopping power of bullet
             mob.vel = vec(0, 0)
   
-
     def draw(self):
 
         # draw map5
-        self.screen.blit(self.map_img, self.camera.apply(self.map_rect))
+        self.screen.blit(self.map.image, self.camera.apply(self.map.rect))
 
         # draw sprites
         for sprite in self.all_sprites:
@@ -313,14 +325,16 @@ class Game:
         
         # debug 
         if self.draw_debug == True:
-            pygame.display.set_caption("FPS: {:.2f}".format(self.clock.get_fps()))
+            pygame.display.set_caption("FPS: {0:.2f}, Cam_off: {1}, player: {2}".format(self.clock.get_fps(), self.camera.offset, self.player.rect))
             pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
+            pygame.draw.rect(self.screen, RED, self.camera.apply(self.camera.rect), 4) #screen, color, rect, thickness
             #pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
             pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(self.player.hit_poly)).points, 2)
             for sprite in self.all_sprites:
                 pass
             for sprite in self.mob_sprites:
-                pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
+                #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
+                #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.image.get_rect()), 2)
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
                 #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
             for sprite in self.wall_sprites:

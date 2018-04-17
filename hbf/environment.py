@@ -50,9 +50,10 @@ class IsoTileMap(object):
     
     def __init__(self, filename):
         self.tmxdata = load_pygame(filename, pixelalpha = True)
-        self.y_offset = MAP_Y_OFFSET # the distance up the map should be rendered, i.e cut off the top empty space
         self.width = self.tmxdata.width * self.tmxdata.tilewidth
-        self.height = self.tmxdata.height * self.tmxdata.tileheight
+        self.height = self.tmxdata.height * self.tmxdata.tileheight / 2  #- MAP_CLIPPING['bottom']# halved becuase of staggering
+        self.image = None # these get define when draw_map() is called
+        self.rect = None
 
     def _render(self, surface):
         layer_no = 0
@@ -72,7 +73,7 @@ class IsoTileMap(object):
                                 x_offset = self.tmxdata.tilewidth / 2
 
                             surf_x = cart_x * self.tmxdata.tilewidth + x_offset
-                            surf_y = cart_y * self.tmxdata.tileheight / 2 - self.y_offset
+                            surf_y = cart_y * self.tmxdata.tileheight / 2 - MAP_CLIP_TOP
                             surface.blit(tile, (surf_x, surf_y))
 
             layer_no = layer_no + 1
@@ -80,7 +81,9 @@ class IsoTileMap(object):
     def make_map(self):
         temp_surface = pygame.Surface((self.width, self.height))
         self._render(temp_surface)
-        return temp_surface
+        self.image = temp_surface
+        self.rect = temp_surface.get_rect()
+        #return temp_surface
 
 
 class Hud(object):
@@ -115,32 +118,46 @@ class Hud(object):
 
 
 class Camera(object):
-    """The camera is simply a Rect that moves with the player
-    As the camera moves other objects are shifted the same amount in the opposite direction
-    to create the feeling that the camera is scrolling through the map"""
+    """
+    The camera is simply a Rect that moves with the player
+    As the camera moves other objects are shifted the same amount in the opposite direction (offset)
+    to create the feeling that the camera is scrolling through the map
+    """
     def __init__(self, map, width, height):
         self.width = width
         self.height = height
-        self.camera = pygame.Rect(0, 0, self.width, self.height)
+        self.offset = pygame.Rect(0, 0, self.width, self.height) # used to move other objects
+        self.rect = pygame.Rect(0, 0, self.width, self.height) # used to keep track of viewpoint
         self.map = map
 
     # given a rect simply shift it the amount the camera has "moved"
     def apply(self, rect):
-        return rect.move(self.camera.topleft)
+        """
+        Moves a rect relative to the offset
+        """
+        return rect.move(self.offset.topleft)
 
     def apply_poly(self, polygon):
-        return polygon.move(self.camera.topleft[0], self.camera.topleft[1])
+        """
+        Moves a poly relative to the offset
+        """
+        return polygon.move(self.offset.topleft[0], self.offset.topleft[1])
 
     def apply_points(self, points):
+        """
+        Moves a list of points relative to the offset
+        """
         new_points = []
         for p in range(0, len(points)):
-            new_x = points[p][0] + self.camera.topleft[0]
-            new_y = points[p][1] + self.camera.topleft[1]
+            new_x = points[p][0] + self.offset.topleft[0]
+            new_y = points[p][1] + self.offset.topleft[1]
             new_points.append((new_x, new_y))
         return new_points
 
-    # updates the pos of the camera based on the target being tracked
     def update(self, target):
+        """
+        Updates the pos of the camera based on the target being tracked
+        """
         # update the pos of the camera rect
         x = -target.rect.x + int(self.width / 2)
         y = -target.rect.y + int(self.height / 2)
@@ -151,4 +168,5 @@ class Camera(object):
         x = max(-(self.map.width - self.width), x) # right
         y = max(-(self.map.height - self.height), y) # bottom
 
-        self.camera = pygame.Rect(x, y, self.width, self.height)
+        self.offset = pygame.Rect(x, y, self.width, self.height)
+        self.rect = pygame.Rect(-x, -y, self.width, self.height)

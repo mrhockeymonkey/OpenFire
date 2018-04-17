@@ -112,6 +112,16 @@ class Sprite(pygame.sprite.Sprite):
             sprite.pos.x = sprite.pos.x + mpv[0]
             sprite.pos.y = sprite.pos.y + mpv[1]
             sprite.vel.x = 0
+
+    def correct_offmap(self, sprite):
+        """
+        limit the sprite position to be within the bounds of the map
+        """
+        sprite.pos.x = max(0 + sprite.rect.width/2, sprite.pos.x) # left
+        sprite.pos.y = max(0 + sprite.rect.height/2, sprite.pos.y) # top
+        sprite.pos.x = min(self.game.map.width - sprite.rect.width/2, sprite.pos.x) # right
+        sprite.pos.y = min(self.game.map.height - sprite.rect.height/2, sprite.pos.y) # bottom
+
             
 class Enemy(Sprite):
     def __init__(self, game, pos, image):
@@ -199,7 +209,7 @@ class Enemy(Sprite):
                 self.image = pygame.transform.flip(self.image, True, False)
             
 
-class Obstacle(Sprite):
+class ObstacleRect(Sprite):
     def __init__(self, game, pos, w, h):
         self.groups = game.wall_sprites
         Sprite.__init__(self, game, self.groups, WALL_LAYER, pos, game.player_ss_img) # inherit from Sprite
@@ -208,15 +218,11 @@ class Obstacle(Sprite):
 
 class ObstaclePoly(Sprite):
     def __init__(self, game, pos, points):
+        print("obs " + str(pos))
         self.groups = game.wall_sprites
         Sprite.__init__(self, game, self.groups, WALL_LAYER, pos, game.player_ss_img) # inherit from Sprite?????
         self.polygon = polygon.Poly(points)
         self.hit_poly = self.polygon
-
-
-
-
-
 
 
 
@@ -289,6 +295,7 @@ class Item(Sprite):
 class SpriteSheet(object):
     def __init__(self, sheet):
         self.sheet = sheet
+
         #try:
         #    self.sheet = pygame.image.load(filename).convert()
         #except pygame.error as message:
