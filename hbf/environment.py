@@ -55,10 +55,10 @@ class IsoTileMap(object):
         self.image = None # these get define when draw_map() is called
         self.rect = None
 
-    def _render(self, surface):
+    def _render(self, surface, layers):
         layer_no = 0
         for layer in self.tmxdata.visible_layers:
-            if isinstance(layer, pytmx.TiledTileLayer):
+            if isinstance(layer, pytmx.TiledTileLayer) and layer.name in layers:
                 y_coordinates = list(range(0, layer.height))
                 x_coordinates = list(range(0, layer.width))
 
@@ -78,9 +78,10 @@ class IsoTileMap(object):
 
             layer_no = layer_no + 1
 
-    def make_map(self):
-        temp_surface = pygame.Surface((self.width, self.height))
-        self._render(temp_surface)
+    def make_map(self, layers):
+        temp_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        #temp_surface.set_colorkey(BLACK, pygame.RLEACCEL)
+        self._render(temp_surface, layers)
         self.image = temp_surface
         self.rect = temp_surface.get_rect()
         #return temp_surface

@@ -159,7 +159,9 @@ class Game:
         self.night = False
         
         self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
-        self.map.make_map()
+        self.map.make_map(['background','midground'])
+        self.map_foreground = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
+        self.map_foreground.make_map(['foreground'])
         
         self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
@@ -311,8 +313,10 @@ class Game:
             mob.vel = vec(0, 0)
   
     def draw(self):
+        """The draw phase draw every visible object to the screen. 
+        Note that order is important, You must build up the image layer at a time"""
 
-        # draw map5
+        # draw map basckground
         self.screen.blit(self.map.image, self.camera.apply(self.map.rect))
 
         # draw sprites
@@ -320,6 +324,9 @@ class Game:
             if isinstance(sprite, sprites.Enemy):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+
+        # draw map foreground
+        self.screen.blit(self.map_foreground.image, self.camera.apply(self.map_foreground.rect))
 
         #dot = pygame.C
         
