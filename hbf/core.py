@@ -2,9 +2,9 @@ import pygame
 import sys
 from os import path
 from random import choice,random
-from hbf import sprites, player, enemy, mob
-from hbf import environment
-from hbf import input
+from hbf import sprites, player, enemy, mob, npc, environment
+#from hbf import environment
+#from hbf import input
 from pygame.locals import * 
 from settings import *
 
@@ -77,6 +77,7 @@ class Game:
         self.images['finn_and_jake_sword_combo'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_sword_combo.png"))
         self.images['finn_and_jake_idle'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_idle.png"))
         self.images['finn_and_jake_run'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_run.png"))
+        self.images['flame_princess_npc'] = pygame.image.load(os.path.join(self.img_dir, "flame_princess_npc.png"))
         
         self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
         self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
@@ -161,7 +162,7 @@ class Game:
         self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
         self.map.make_map(['background','midground'])
         self.map_foreground = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
-        self.map_foreground.make_map(['foreground'])
+        self.map_foreground.make_map(['foreground'], True)
         
         self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
@@ -178,6 +179,8 @@ class Game:
         for tile_object in self.map.tmxdata.objects:
             if tile_object.name == 'player':
                 self.player = player.Player(self, vec(tile_object.x , tile_object.y))
+            if tile_object.name == 'fp':
+                self.flame_princess = npc.FlamePrincess(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'rumo':
@@ -346,6 +349,7 @@ class Game:
                 #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
             for sprite in self.wall_sprites:
                 pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
+                #pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
                 #pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
             for sprite in self.bullet_sprites:
                 pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)

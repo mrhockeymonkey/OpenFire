@@ -78,8 +78,14 @@ class IsoTileMap(object):
 
             layer_no = layer_no + 1
 
-    def make_map(self, layers):
-        temp_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+    def make_map(self, layers, alpha=False):
+        """Render the map into an image that can be draw to screen
+        You can specify which layers are used to make the map and is alpha is to be used"""
+        if alpha:
+            temp_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        else:
+            temp_surface = pygame.Surface((self.width, self.height))
+            
         #temp_surface.set_colorkey(BLACK, pygame.RLEACCEL)
         self._render(temp_surface, layers)
         self.image = temp_surface
