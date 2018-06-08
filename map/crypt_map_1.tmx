@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="8" height="14" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="50">
+ <tileset firstgid="1" source="kenney-dungeon-tileset.tsx"/>
+ <layer name="background" width="8" height="14">
+  <data encoding="csv">
+33,68,68,67,82,109,68,66,
+102,68,66,67,112,67,66,66,
+33,98,68,66,107,68,66,68,
+33,94,67,66,68,68,83,68,
+34,33,98,66,66,112,67,68,
+34,38,67,66,66,68,66,66,
+34,36,108,68,68,66,108,66,
+37,112,68,67,67,68,68,68,
+39,81,66,84,90,68,67,106,
+107,68,112,40,90,67,66,66,
+111,67,66,35,33,94,68,68,
+66,110,96,40,34,90,66,66,
+68,109,33,33,35,35,90,68,
+67,37,35,35,35,34,90,67
+</data>
+ </layer>
+ <layer name="midground" width="8" height="14">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,15,0,0,
+0,0,0,0,0,18,0,0,
+0,0,0,0,15,0,0,0,
+0,0,0,0,14,0,0,0,
+0,0,0,15,0,0,0,0,
+0,0,0,18,0,0,0,0,
+0,0,19,0,0,0,0,0,
+0,0,14,0,0,0,0,0,
+0,14,0,0,0,0,0,0,
+0,14,0,0,0,0,0,0,
+15,0,0,0,0,0,0,0,
+18,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer name="foreground" width="8" height="14">
+  <data encoding="csv">
+0,119,0,229,0,10,150,0,
+0,119,9,0,0,0,150,0,
+0,0,135,0,0,0,0,186,
+0,0,119,0,0,0,0,150,
+0,0,0,119,0,0,0,0,
+0,0,0,131,0,7,0,235,
+0,0,0,0,135,9,0,0,
+0,0,0,0,119,0,9,0,
+0,0,0,0,0,123,9,0,
+0,0,0,0,0,139,0,9,
+0,0,0,0,0,0,143,12,
+0,0,0,0,0,0,123,0,
+0,0,0,0,0,0,0,119,
+0,0,0,0,0,0,0,119
+</data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object id="5" name="spawn" x="1782.34" y="216.664" width="39.3281" height="34.6719"/>
+  <object id="25" name="sword" x="1766.34" y="703.664" width="39.3281" height="34.6719"/>
+  <object id="28" name="wall" x="908" y="428">
+   <polygon points="0,0 32,-18 -650,-420 -648,-384"/>
+  </object>
+  <object id="31" name="wall" x="1007" y="487">
+   <polygon points="0,0 1038,599 1075,582 26,-18"/>
+  </object>
+  <object id="35" name="wall" x="1492" y="470">
+   <polygon points="0,0 -106,61 -159,41 -121,-56 -73,-81 -17,-38"/>
+  </object>
+  <object id="36" name="wall" x="1742" y="619">
+   <polygon points="0,0 -106,61 -159,41 -121,-56 -73,-81 -17,-38"/>
+  </object>
+  <object id="37" name="wall" x="1872" y="547">
+   <polygon points="0,0 -106,61 -159,41 -121,-56 -73,-81 -17,-38"/>
+  </object>
+  <object id="38" name="wall" x="2123" y="692">
+   <polygon points="0,0 -106,61 -159,41 -121,-56 -73,-81 -17,-38"/>
+  </object>
+  <object id="39" name="wall" x="1996" y="766">
+   <polygon points="0,0 -106,61 -159,41 -121,-56 -73,-81 -17,-38"/>
+  </object>
+  <object id="40" name="wall" x="1544" y="456">
+   <polygon points="0,0 56,-55 31,-107 -46,-102 -64,-56"/>
+  </object>
+  <object id="41" name="wall" x="1968" y="412">
+   <polygon points="0,0 115,30 107,-45 66,-59 6,-30"/>
+  </object>
+  <object id="42" name="wall" x="1482" y="63">
+   <polygon points="0,0 -48,28 -152,-44 -118,-86 -33,-86"/>
+  </object>
+  <object id="43" name="wall" x="738" y="156">
+   <polygon points="0,0 213,-117 154,-169 -12,-99 -47,-36"/>
+  </object>
+  <object id="44" name="player" x="219" y="869" width="56" height="54"/>
+  <object id="45" name="fp" x="581" y="102" width="24" height="25"/>
+  <object id="46" name="wall" x="1883" y="140">
+   <polygon points="0,0 -252,-143 -225,-161 30,-12"/>
+  </object>
+  <object id="47" name="wall" x="1992" y="202">
+   <polygon points="0,0 144,90 180,68 17,-19"/>
+  </object>
+ </objectgroup>
+</map>

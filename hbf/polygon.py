@@ -8,7 +8,6 @@ class Poly(object):
         """return a new polygon moved by x, y"""
         return Poly([(x + p_x, y + p_y) for (p_x, p_y) in self.points])
 
-
     def collidepoly(self, polygon):
         '''
         Return True and the MPV if the shapes collide. Otherwise, return False and

@@ -27,6 +27,10 @@ class Game:
         self.exit = False
         self.temp = 0
 
+        # define events
+        self.FT_SWORDSTRIKE_1 = -1
+        self.FT_SWORDSTRIKE_2 = -1
+
         # loading files
         self.load_data()
 
@@ -78,6 +82,12 @@ class Game:
         self.images['finn_and_jake_idle'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_idle.png"))
         self.images['finn_and_jake_run'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_run.png"))
         self.images['flame_princess_npc'] = pygame.image.load(os.path.join(self.img_dir, "flame_princess_npc.png"))
+        self.images['finn_and_jake_found_sword_1'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_1.png"))
+        self.images['finn_and_jake_found_sword_2'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_2.png"))
+        self.images['finn_and_jake_found_sword_3'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_3.png"))
+
+        #for k in self.images.keys():
+        #    self.images[k] = pygame.transform.scale(self.images[k], (self.images[k].get_width()*2, self.images[k].get_height()*2))
         
         self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
         self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
@@ -100,22 +110,15 @@ class Game:
         
 
 
-        self.bullet_image = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
+
         
         self.splat_image = pygame.image.load(os.path.join(self.img_dir, 'splat red.png'))
         self.splat_image = pygame.transform.scale(self.splat_image, (64, 64))
 
-        self.bullet_images = {}
-        self.bullet_images['lg'] = pygame.image.load(os.path.join(self.img_dir, BULLET_IMG))
-        self.bullet_images['sm'] = pygame.transform.scale(self.bullet_images['lg'], (10, 10))
+
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
         
-
-
-        self.gun_flashes = []
-        for img in MUZZLE_FLASHES:
-            self.gun_flashes.append(pygame.image.load(os.path.join(self.img_dir, img))) #convert alpha??
 
         self.item_images = {}
         for item in ITEM_IMAGES:
@@ -169,18 +172,21 @@ class Game:
         
 
         # Define sprites
-        self.all_sprites = pygame.sprite.LayeredUpdates()
-        self.wall_sprites = pygame.sprite.Group()
-        self.mob_sprites = pygame.sprite.Group()
+        self.all_sprites    = pygame.sprite.LayeredUpdates()
+        self.wall_sprites   = pygame.sprite.Group()
+        self.mob_sprites    = pygame.sprite.Group()
         self.bullet_sprites = pygame.sprite.Group()
-        self.item_sprites = pygame.sprite.Group()
+        self.sword_sprites  = pygame.sprite.Group()
+        self.item_sprites   = pygame.sprite.Group()
+        self.hidden_sprites = pygame.sprite.Group()
+        self.damage_sprites = pygame.sprite.Group()
 
         # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
             if tile_object.name == 'player':
                 self.player = player.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'fp':
-                self.flame_princess = npc.FlamePrincess(self, vec(tile_object.x , tile_object.y))
+                npc.FlamePrincess(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
             if tile_object.name == 'rumo':
@@ -189,9 +195,7 @@ class Game:
                 enemy.Homunculus(self, vec(tile_object.x, tile_object.y))
             if tile_object.name == 'homun':
                 enemy.Homun(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name in ['health', 'shotgun','pistol','chainsaw']:
-                print('here')
-
+            if tile_object.name in ['health', 'shotgun','pistol','chainsaw','sword']:
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
 
         self.spawn_points = [obj for obj in self.map.tmxdata.objects if obj.name == 'spawn']
@@ -200,7 +204,7 @@ class Game:
             
         self.effects_sounds['level_start'].play()
 
-        self.current_mob = mob.Mob(self, 5)
+        self.current_mob = mob.Mob(self, 3)
 
 
 
@@ -261,6 +265,18 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.player.attack()
 
+        # finally trigger events based on the clock. (frame bound events)
+        if self.FT_SWORDSTRIKE_1 > 0:
+            self.FT_SWORDSTRIKE_1 -= 1
+        elif self.FT_SWORDSTRIKE_1 == 0:
+            self.FT_SWORDSTRIKE_1 = -1
+            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage)
+        if self.FT_SWORDSTRIKE_2 > 0:
+            self.FT_SWORDSTRIKE_2 -= 1
+        elif self.FT_SWORDSTRIKE_2 == 0:
+            self.FT_SWORDSTRIKE_2 = -1
+            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage)
+
     def update(self):
         # call the update method on all sprites
         self.all_sprites.update()
@@ -276,20 +292,19 @@ class Game:
                 hit.kill()
                 self.effects_sounds['health_up'].play()
                 self.player.health = PLAYER_HEALTH
-            if hit.type == 'shotgun':
+            if hit.type == 'sword':
                 hit.kill()
-                self.effects_sounds['gun_pickup'].play()
-                self.player.weapon = 'shotgun'
-            if hit.type == 'pistol':
-                hit.kill()
-                self.effects_sounds['gun_pickup'].play()
-                self.player.weapon = 'pistol'
-            if hit.type == 'chainsaw':
-                hit.kill()
-                self.effects_sounds['gun_pickup'].play()
-                self.player.weapon = 'chainsaw'
+                #self.effects_sounds['gun_pickup'].play()
+                self.player.pick_up_sword()
+            #if hit.type == 'pistol':
+            #    hit.kill()
+            #    self.effects_sounds['gun_pickup'].play()
+            #    self.player.weapon = 'pistol'
+            #if hit.type == 'chainsaw':
+            #    hit.kill()
+            #    self.effects_sounds['gun_pickup'].play()
+            #    self.player.weapon = 'chainsaw'
 
-        # should this move to the mob class????
         # mobs hit player
         hits = pygame.sprite.spritecollide(self.player, self.mob_sprites, False, sprites.Sprite.collide_hitrect)
         for hit in hits:
@@ -304,16 +319,11 @@ class Game:
             self.player.hit()
             self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
 
-        # bullets hit mobs
-        hits = pygame.sprite.groupcollide(self.mob_sprites, self.bullet_sprites, False, True)
-        for mob in hits:
-            # decrement health by damange * # of bullets that hit
-            #hit.health -= WEAPONS[self.player.weapon]['damage'] * len(hits[hit])
-            for bullet in hits[mob]:
-                mob.hit()
-                mob.health -= bullet.dmg
-            # stall sprite to simulate stopping power of bullet
-            mob.vel = vec(0, 0)
+        # sword hits enemy
+        hits = pygame.sprite.groupcollide(self.mob_sprites, self.sword_sprites, False, True, collided=sprites.Sprite.collide_hitrect)
+        for h in hits:
+            h.hit(hits[h][0].damage) # we just use the first hit even if there are multiple
+
   
     def draw(self):
         """The draw phase draw every visible object to the screen. 
@@ -326,33 +336,51 @@ class Game:
         for sprite in self.all_sprites:
             if isinstance(sprite, sprites.Enemy):
                 sprite.draw_health()
-            self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+            if sprite.image:
+                self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
 
         # draw map foreground
         self.screen.blit(self.map_foreground.image, self.camera.apply(self.map_foreground.rect))
+
+        for sprite in self.damage_sprites:
+            sprite.draw()
 
         #dot = pygame.C
         
         # debug 
         if self.draw_debug == True:
             pygame.display.set_caption("FPS: {0:.2f}, Cam_off: {1}, player: {2}".format(self.clock.get_fps(), self.camera.offset, self.player.rect))
-            pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
-            pygame.draw.rect(self.screen, RED, self.camera.apply(self.camera.rect), 4) #screen, color, rect, thickness
-            #pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
-            pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(self.player.hit_poly)).points, 2)
             for sprite in self.all_sprites:
-                pass
-            for sprite in self.mob_sprites:
-                #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
-                #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.image.get_rect()), 2)
-                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
-                #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
-            for sprite in self.wall_sprites:
-                pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
-                #pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
-                #pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
-            for sprite in self.bullet_sprites:
-                pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
+                sprite.draw_debug()
+
+            #pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
+            #pygame.draw.rect(self.screen, RED, self.camera.apply(self.camera.rect), 4) #screen, color, rect, thickness
+            ##pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
+            #pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(self.player.hit_poly)).points, 2)
+            #
+            #if self.player.atk_rect:
+            #    pygame.draw.rect(self.screen, RED, self.player.atk_rect, 3)
+            ##olist = self.player.mask.outline()
+            ##tmpsurf = pygame.Surface((self.player.rect.width, self.player.rect.height))
+            ##pygame.draw.polygon(tmpsurf, RED, olist, 0)
+            ##self.screen.blit(tmpsurf, self.camera.apply(self.player.rect))
+#
+            #for sprite in self.all_sprites:
+            #    pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 1)
+            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 1)
+            #for sprite in self.hidden_sprites:
+            #    pygame.draw.rect(self.screen, BLACK, self.camera.apply(sprite.rect), 1)
+            #for sprite in self.mob_sprites:
+            #    #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
+            #    #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.image.get_rect()), 2)
+            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
+            #    #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
+            #for sprite in self.wall_sprites:
+            #    pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
+            #    #pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
+            #    #pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
+            #for sprite in self.bullet_sprites:
+            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
         
         if self.night:
             self.render_fog()

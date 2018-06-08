@@ -9,6 +9,7 @@ vec = pygame.math.Vector2
 class FlamePrincess(sprites.Sprite):
     def __init__(self, game, pos):
         self.groups = game.all_sprites
+        self.layer = PLAYER_LAYER
         self.ssheets = {
             'idle'  : sprites.SpriteSheet(game.images['flame_princess_npc'])
         }
@@ -17,9 +18,12 @@ class FlamePrincess(sprites.Sprite):
         }
         self.action = 'idle'
         init_image = self.actions[self.action].images[0]
-        sprites.Sprite.__init__(self, game, self.groups, PLAYER_LAYER, pos, init_image) # inherit from Sprite
+        sprites.Sprite.__init__(self, game, pos, init_image) # inherit from Sprite
 
         self.actions[self.action].iter()
+        
+        self.hit_rect = NPC_HIT_RECT.copy()
+        self.refresh_hitbox()
         
         #self.hit_rect = MOB_HIT_RECT.copy()
         #self.refresh_hitbox()

@@ -22,6 +22,7 @@ MAP = 'grasslands_1.tmx'
 #MAP = 'C:/Users/Scott/Downloads/Kenney Isometric Assets version 3/Prototype pack/Tiled/tiledTemplate_isometric.tmx'
 MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/mirror-edge-map.tmx"
 MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/lab_map_1.tmx"
+MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/crypt_map_1.tmx"
 MAP_CLIP_TOP = 365 # fudged ammount of whitespace to cut fromm the top of map to align objects correctly
 
 BG_MUSIC = 'music/espionage.ogg'
@@ -36,15 +37,21 @@ LIGHT_MASK = 'light_350_med.png'
 LIGHT_RADIUS = (500, 500)
 NIGHT_COLOR = (20, 20, 20)
 
-# Player
-PLAYER_HEALTH = 20
+# Finn
+PLAYER_HEALTH = 300
+PLAYER_BASE_ATK = 50 # the amount of damage each attack will inflict
+PLAYER_LUCK = 20 # the maximum bonus damage each attack will inflict
+
+
 PLAYER_SPRITESHEET = 'finn_and_jake.png'
 PLAYER_SPEED = 450 # the speed the player will move in pixels/sec
 PLAYER_HIT_RECT = pygame.Rect(0, 0, 32, 32)
 PLAYER_HIT_SOUND = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav', 'pain/12.wav', 'pain/13.wav', 'pain/14.wav', ]
 
+NPC_HIT_RECT = pygame.Rect(0, 0, 32, 32) # size of hit box for npcs
+
 # Mob
-MOB_HEALTH = 100
+MOB_HEALTH = 1000
 MOB_IMAGE = 'mithril_mutae.png'
 MOB_SPEED = 100
 MOB_HIT_RECT = pygame.Rect(0, 0, 24, 24)
@@ -54,6 +61,7 @@ MOB_AVOID_RADIUS = 50
 MOB_DETECT_RADIUS = 300 # the distance a mob can detect player
 MOB_ATTACK_RADIUS = 150 # the distance a mob can attack a player from
 MOB_HIT_SOUND = ['splat-15.wav']
+
 
 # Weapons
 BULLET_IMG = 'meteorGrey_tiny1.png'
@@ -112,8 +120,10 @@ ITEM_IMAGES = {
     'health': 'genericItem_color_102.png',
     'shotgun': 'fg_42_by_ashmo.png',
     'pistol': 'german_pistol_by_ashmo.png',
-    'chainsaw': 'chainsaw_by_ashmo.png'
+    'chainsaw': 'chainsaw_by_ashmo.png',
+    'sword': 'sword.png'
 }
 ITEM_BOB_RANGE = 30
 ITEM_BOB_SPEED = 0.3
+ITEM_HIT_RECT = pygame.Rect(0, 0, 5, 5)
 
