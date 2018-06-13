@@ -24,6 +24,7 @@ class Game:
         
         self.clock = pygame.time.Clock()
         self.draw_debug = DEBUG 
+        self.level = 0
         self.exit = False
         self.temp = 0
 
@@ -59,7 +60,7 @@ class Game:
         self.screen.blit(text_surface, text_rect)
 
     def load_data(self):
-        
+
         # check to see if running from source or bundle
         if getattr(sys, 'frozen', False):
             print('running from bundle')
@@ -73,6 +74,12 @@ class Game:
             self.img_dir = os.path.join(self.dir, '../img')
             self.snd_dir = os.path.join(self.dir, '../snd')
             self.map_dir = os.path.join(self.dir, '../map')
+
+        # font
+        self.font = os.path.join(self.img_dir, FONT)
+        self.draw_text("Adventure Time", self.font, 90, RED, self.window_width / 2, 200, align="n")
+        self.draw_text("Rescue FP!", self.font, 70, RED, self.window_width / 2, self.window_height / 2, align="center")
+        pygame.display.update()
 
         # load sprite sheet images
         self.spritesheets = {}
@@ -104,8 +111,7 @@ class Game:
         self.light_rect = self.light_mask.get_rect()
 
 
-        # font
-        self.font = os.path.join(self.img_dir, 'ZOMBIE.TTF')
+
         
         
 
@@ -158,28 +164,33 @@ class Game:
             self.mob_hit_sounds.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
    
     def new(self):
-
+        
         self.paused = False
         self.night = False
-        
-        self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
+        self.dungeon = False
+
+        if self.level == 2:
+            self.dungeon = True
+            self.night = True
+            self.text_ttl = 300 #frames, not seconds
+
+        self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAPS[self.level]))
         self.map.make_map(['background','midground'])
-        self.map_foreground = environment.IsoTileMap(os.path.join(self.map_dir, MAP))
+        self.map_foreground = environment.IsoTileMap(os.path.join(self.map_dir, MAPS[self.level]))
         self.map_foreground.make_map(['foreground'], True)
-        
         self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
-        
-
         # Define sprites
-        self.all_sprites    = pygame.sprite.LayeredUpdates()
-        self.wall_sprites   = pygame.sprite.Group()
-        self.mob_sprites    = pygame.sprite.Group()
-        self.bullet_sprites = pygame.sprite.Group()
-        self.sword_sprites  = pygame.sprite.Group()
-        self.item_sprites   = pygame.sprite.Group()
-        self.hidden_sprites = pygame.sprite.Group()
-        self.damage_sprites = pygame.sprite.Group()
+        self.all_sprites            = pygame.sprite.LayeredUpdates()
+        self.wall_sprites           = pygame.sprite.Group()
+        self.nearby_wall_sprites    = pygame.sprite.Group()
+        self.mob_sprites            = pygame.sprite.Group()
+        self.bullet_sprites         = pygame.sprite.Group()
+        self.sword_sprites          = pygame.sprite.Group()
+        self.item_sprites           = pygame.sprite.Group()
+        self.hidden_sprites         = pygame.sprite.Group()
+        self.damage_sprites         = pygame.sprite.Group()
+        self.exit_sprites           = pygame.sprite.Group()
 
         # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
@@ -197,6 +208,8 @@ class Game:
                 enemy.Homun(self, vec(tile_object.x, tile_object.y))
             if tile_object.name in ['health', 'shotgun','pistol','chainsaw','sword']:
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
+            if tile_object.name == 'exit':
+                sprites.LevelExit(self, vec(tile_object.x, tile_object.y))
 
         self.spawn_points = [obj for obj in self.map.tmxdata.objects if obj.name == 'spawn']
         
@@ -266,6 +279,7 @@ class Game:
                     self.player.attack()
 
         # finally trigger events based on the clock. (frame bound events)
+        # finns sword strike hitboxes are based on frames
         if self.FT_SWORDSTRIKE_1 > 0:
             self.FT_SWORDSTRIKE_1 -= 1
         elif self.FT_SWORDSTRIKE_1 == 0:
@@ -276,14 +290,24 @@ class Game:
         elif self.FT_SWORDSTRIKE_2 == 0:
             self.FT_SWORDSTRIKE_2 = -1
             sprites.SwordStrike(self, self.player.strike_pos, self.player.damage)
+            
 
     def update(self):
         # call the update method on all sprites
+        self.polytests = 0
         self.all_sprites.update()
 
         # ???
         self.camera.update(self.player)
         self.hud.update()
+
+        # player hits level exit
+        hit = pygame.sprite.spritecollide(self.player, self.exit_sprites, False, sprites.Sprite.collide_hitrect)
+        if hit:
+            self.draw_text("Loading", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
+            pygame.display.update()
+            self.level += 1
+            self.new()
 
         # player hits items
         hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False)
@@ -346,10 +370,15 @@ class Game:
             sprite.draw()
 
         #dot = pygame.C
+        pygame.display.set_caption("Happy Battle Factor | {0:.2f}fps".format(self.clock.get_fps()))
         
         # debug 
         if self.draw_debug == True:
-            pygame.display.set_caption("FPS: {0:.2f}, Cam_off: {1}, player: {2}".format(self.clock.get_fps(), self.camera.offset, self.player.rect))
+            print("polytests: {0}".format(self.polytests))
+            pygame.display.set_caption("Happy Battle Factor | {0:.2f}fps {1}".format(
+                self.clock.get_fps(), 
+                len(self.nearby_wall_sprites.sprites())
+            ))
             for sprite in self.all_sprites:
                 sprite.draw_debug()
 
@@ -390,6 +419,10 @@ class Game:
         pygame.draw.rect(self.screen, self.hud.hbar_fill_col, self.hud.hbar_fill)
         pygame.draw.rect(self.screen, self.hud.hbar_outline_col, self.hud.hbar_outline, 2)  
 
+        if self.dungeon:
+            if self.text_ttl > 0:
+                self.text_ttl -= 1
+                self.draw_text("Survive", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
 
         if self.paused:
             self.screen.blit(self.dim_screen, (0,0))

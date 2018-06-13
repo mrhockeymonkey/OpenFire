@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="8" height="14" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="50">
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="8" height="14" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="52">
  <tileset firstgid="1" source="kenney-dungeon-tileset.tsx"/>
  <layer name="background" width="8" height="14">
   <data encoding="csv">
@@ -99,5 +99,6 @@
   <object id="47" name="wall" x="1992" y="202">
    <polygon points="0,0 144,90 180,68 17,-19"/>
   </object>
+  <object id="51" name="exit" x="1938" y="98" width="56" height="118"/>
  </objectgroup>
 </map>

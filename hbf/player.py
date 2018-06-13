@@ -152,7 +152,7 @@ class Player(sprites.Sprite):
 
         # now that the sprite has been moved, test for collisions and correct
         self.refresh_hitbox(offset=self.hit_rect_offset)
-        self.correct_collision(self, self.game.wall_sprites)
+        self.correct_wall_collision()
         self.correct_offmap(self)
         self.refresh_hitbox(offset=self.hit_rect_offset)
 

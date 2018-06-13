@@ -1,14 +1,12 @@
-#from __future__ import absolute_import, division, print_function
-
 import os
 import pygame
 
-#Genral
+# genral
 FPS = 60
-CAMERASLACK = 90
-DEBUG = True
+CAMERASLACK = 70
+DEBUG = False
 
-#Colours  R    G    B
+# colours  R    G    B
 BLACK  = (0  , 0  , 0  )
 WHITE  = (255, 255, 255)
 RED    = (255, 0  , 0  )
@@ -16,15 +14,14 @@ GREEN  = (0  , 255, 0  )
 YELLOW = (255, 255, 0  )
 CYAN   = (0  , 255, 255)
 
-# -------- OPTIONS -------- #
-#Map
-MAP = 'grasslands_1.tmx'
-#MAP = 'C:/Users/Scott/Downloads/Kenney Isometric Assets version 3/Prototype pack/Tiled/tiledTemplate_isometric.tmx'
-MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/mirror-edge-map.tmx"
-MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/lab_map_1.tmx"
-MAP = "C:/Users/Scott/OneDrive/Code/HappyBattleFactor/map/crypt_map_1.tmx"
+# general
+MAPS = [
+    "crypt_map_1.tmx",
+    "crypt_map_2.tmx",
+    "crypt_map_3.tmx"
+]
 MAP_CLIP_TOP = 365 # fudged ammount of whitespace to cut fromm the top of map to align objects correctly
-
+FONT = 'AdventureTime.ttf' # the font file to use for all text
 BG_MUSIC = 'music/espionage.ogg'
 GAME_SOUNDS = {
     'level_start': 'level_start.wav',

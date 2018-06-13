@@ -33,17 +33,21 @@ class Sprite(pygame.sprite.Sprite):
 
         self.rect.center = self.pos # update sprite to be at given pos, here we use pos as the center insteasd of topleft
 
-
     @staticmethod
-    def collide_hitrect(sprite1, sprite2):
-        """Returns bool. Determines if a sprite's hitrect has collided with another rect.
+    def collide_rect(sprite1, sprite2):
+        """Returns bool. Determines if a sprite's hit_rect has collided with another rect.
         This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
         return sprite1.hit_rect.colliderect(sprite2.rect)
 
+    @staticmethod
+    def collide_hitrect(sprite1, sprite2):
+        """Returns bool. Determines if a sprite's hit_rect has collided with another hit_rect.
+        This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
+        return sprite1.hit_rect.colliderect(sprite2.hit_rect)
 
     @staticmethod
-    def collide_polygon(sprite1, sprite2):
-        """ Returnsbool. Determines if a spites hit_poly has collided with another Poly object.
+    def collide_hitpoly(sprite1, sprite2):
+        """ Returnsbool. Determines if a spites hit_poly has collided with another hit_poly object.
         This is used as an override for the standard collision detection of pygame.sprite.spritecollide()"""
         collision, mpv = sprite1.hit_poly.collidepoly(sprite2.hit_poly)
         return collision
@@ -68,22 +72,40 @@ class Sprite(pygame.sprite.Sprite):
             self.hit_rect.center = self.pos
         self.hit_poly = polygon.Poly([self.hit_rect.topleft, self.hit_rect.topright, self.hit_rect.bottomright, self.hit_rect.bottomleft])
 
-    def correct_collision(self, sprite, group):
-        """Adjust the position of the sprite so that it does not collide with the group. i.e. to stop sprite
-        walking through walls and other obstacles"""
-        rect_hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_hitrect)
-        if rect_hits:
-            print('rect hit')
-        # hits is the list of sprites that the calling sprite has collided with. eg the wall a player has run into
-        hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_polygon) #sprite, group, dokill, collided (callback function to override method of checking collisions)
-        if hits:
-            # if there are any hits we want the minimum push vector to move the sprite away
-            collision, mpv = sprite.hit_poly.collidepoly(hits[0].hit_poly)
-            
-            # update the sprite accordingly
-            sprite.pos.x = sprite.pos.x + mpv[0]
-            sprite.pos.y = sprite.pos.y + mpv[1]
-            sprite.vel.x = 0
+    def correct_wall_collision(self):
+        """ Walls consist of an outer rect and an inner polygon. We only test polygon collision when the sprite rect has
+        collided with a wall rect becuase polygon collision is expensive """
+        self.game.nearby_wall_sprites.empty()
+        
+        # detect nearby wall using the collide_rect method
+        nearby_walls = pygame.sprite.spritecollide(self, self.game.wall_sprites, False, Sprite.collide_rect)
+        if nearby_walls:
+            # detect collisions using the collide_polygon method
+            self.game.nearby_wall_sprites.add(nearby_walls)
+            hits = pygame.sprite.spritecollide(self, self.game.nearby_wall_sprites, False, Sprite.collide_hitpoly)
+            self.game.polytests += 1
+            if hits:
+                # if there are any hits we want the minimum push vector to move the sprite away accordingly
+                collision, mpv = self.hit_poly.collidepoly(hits[0].hit_poly)
+                self.pos.x = self.pos.x + mpv[0]
+                self.pos.y = self.pos.y + mpv[1]
+                self.vel.x = 0
+
+    #DEPRECATE
+    #def correct_collision(self, sprite, group):
+    #    """Adjust the position of the sprite so that it does not collide with the group. i.e. to stop sprite
+    #    walking through walls and other obstacles"""
+
+    #    # hits is the list of sprites that the calling sprite has collided with. eg the wall a player has run into
+    #    hits = pygame.sprite.spritecollide(sprite, group, False, Sprite.collide_polygon) #sprite, group, dokill, collided (callback function to override method of checking collisions)
+    #    if hits:
+    #        # if there are any hits we want the minimum push vector to move the sprite away
+    #        collision, mpv = sprite.hit_poly.collidepoly(hits[0].hit_poly)
+    #        
+    #        # update the sprite accordingly
+    #        sprite.pos.x = sprite.pos.x + mpv[0]
+    #        sprite.pos.y = sprite.pos.y + mpv[1]
+    #        sprite.vel.x = 0
 
     def correct_offmap(self, sprite):
         """
@@ -158,7 +180,8 @@ class Enemy(Sprite):
             self.vel += self.acc * self.game.dt # Laws of motion: a = v/t or v = a*t
             self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2 # ??? d = v*t
             self.refresh_hitbox()
-            self.correct_collision(self, self.game.wall_sprites) # now that the sprite has been moved, test for collisions and correct
+            #self.correct_collision(self, self.game.wall_sprites) # now that the sprite has been moved, test for collisions and correct
+            self.correct_wall_collision() # now that the sprite has been moved, test for collisions and correct
             self.refresh_hitbox()
         else:
             self.vel = vec(0,0)
@@ -221,6 +244,12 @@ class Damage(Sprite):
         if pygame.time.get_ticks() - self.spawn_time > 500:
             self.kill()
 
+class LevelExit(Sprite):
+    def __init__(self, game, pos):
+        self.groups = game.all_sprites, game.exit_sprites
+        self.layer = BULLET_LAYER
+        Sprite.__init__(self, game, pos)
+        self.hit_rect = self.rect
 
 class ObstacleRect(Sprite):
     def __init__(self, game, pos, w, h):
