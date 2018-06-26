@@ -74,17 +74,7 @@ class Game:
         self.sounds = {}
         for k,v in SOUNDS.items():
             self.sounds[k] = pygame.mixer.Sound(os.path.join(self.snd_dir, v))
-        #self.effects_sounds = {}
-        #for type in GAME_SOUNDS:
-        #    self.effects_sounds[type] = pygame.mixer.Sound(os.path.join(self.snd_dir, GAME_SOUNDS[type]))
-#
-        #self.player_hit_sounds = []
-        #for snd in PLAYER_HIT_SOUND:
-        #    self.player_hit_sounds.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
-#
-        #self.ENEMY_HIT_SOUNDs = []
-        #for snd in ENEMY_HIT_SOUND:
-        #    self.ENEMY_HIT_SOUNDs.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
+
    
     def new(self):
         """ Starts a new level """
