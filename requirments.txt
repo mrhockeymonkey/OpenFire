@@ -1,5 +1,4 @@
 pygame
 pytmx
 pytweening
-pylygon
 numpy
