@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from hbf import sprites
+from hbf import sprites, animation
 from settings import *
 from itertools import chain
 from random import choice, randint
@@ -21,20 +21,22 @@ class Player(sprites.Sprite):
         self.ssheet_w = 200
         self.ssheet_h = 150
         self.ssheets = {
-            'attack': sprites.SpriteSheet(game.images['finn_and_jake_sword_combo']),
-            'idle'  : sprites.SpriteSheet(game.images['finn_and_jake_idle']),
-            'run'   : sprites.SpriteSheet(game.images['finn_and_jake_run']),
-            'sword1': sprites.SpriteSheet(game.images['finn_and_jake_found_sword_1']),
-            'sword2': sprites.SpriteSheet(game.images['finn_and_jake_found_sword_2']),
-            'sword3': sprites.SpriteSheet(game.images['finn_and_jake_found_sword_3'])
+            'attack': animation.SpriteSheet(game.images['fj_sword_combo']),
+            'idle'  : animation.SpriteSheet(game.images['fj_idle']),
+            'run'   : animation.SpriteSheet(game.images['fj_run']),
+            'sword1': animation.SpriteSheet(game.images['fj_found1']),
+            'sword2': animation.SpriteSheet(game.images['fj_found2']),
+            'sword3': animation.SpriteSheet(game.images['fj_found3']),
+            'hit'   : animation.SpriteSheet(game.images['fj_hit'])
         }
         self.actions = {
-            'attack': sprites.SpriteStripAnim(self.ssheets['attack'], (0, 0, self.ssheet_w, self.ssheet_h), 14, colorkey=-1,loop=False, frames=5),
-            'idle'  : sprites.SpriteStripAnim(self.ssheets['idle'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=True,  frames=7 ),
-            'run'   : sprites.SpriteStripAnim(self.ssheets['run'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=True,  frames=7 ),
-            'sword' : sprites.SpriteStripAnim(self.ssheets['sword1'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=False,  frames=7 ) +
-                sprites.SpriteStripAnim(self.ssheets['sword2'], (0, 0, self.ssheet_w, self.ssheet_h), 8, colorkey=-1, loop=False,  frames=7 ) +
-                sprites.SpriteStripAnim(self.ssheets['sword3'], (0, 0, self.ssheet_w, self.ssheet_h), 6, colorkey=-1, loop=False,  frames=7 )
+            'attack': animation.SpriteStripAnim(self.ssheets['attack'], (0, 0, self.ssheet_w, self.ssheet_h), 14, colorkey=-1,loop=False, frames=5),
+            'idle'  : animation.SpriteStripAnim(self.ssheets['idle'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=True,  frames=7 ),
+            'run'   : animation.SpriteStripAnim(self.ssheets['run'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=True,  frames=7 ),
+            'hit'   : animation.SpriteStripAnim(self.ssheets['hit'], (0, 0, self.ssheet_w, self.ssheet_h), 4, colorkey=-1, loop=False,  frames=7 ),
+            'sword' : animation.SpriteStripAnim(self.ssheets['sword1'], (0, 0, self.ssheet_w, self.ssheet_h), 12, colorkey=-1, loop=False,  frames=7 ) +
+                animation.SpriteStripAnim(self.ssheets['sword2'], (0, 0, self.ssheet_w, self.ssheet_h), 8, colorkey=-1, loop=False,  frames=7 ) +
+                animation.SpriteStripAnim(self.ssheets['sword3'], (0, 0, self.ssheet_w, self.ssheet_h), 6, colorkey=-1, loop=False,  frames=7 )
         }
         self.action = 'idle'
         init_image = self.actions[self.action].images[0]
@@ -43,22 +45,19 @@ class Player(sprites.Sprite):
         self.hit_rect_offset = vec(0, 50)
         self.atk_rect = None
         self.health = PLAYER_HEALTH
+        self.invun = False
+        self.uber = False
         self.max_health = PLAYER_HEALTH
-        self.damaged = False
         self.facing = 'right'
-        
         self.actions[self.action].iter()
-        self.refresh_hitbox(offset=self.hit_rect_offset)
-        #self.rect = pygame.Rect(0, 0, 115, 65)#self.image.get_rect()
-
-        
+        self.refresh_rect(offset=self.hit_rect_offset)
+        self.refresh_poly()
 
     def move(self, dir):
-        # 
-        if self.action == 'sword':
-            return
+        if self.action in ['sword', 'hit']:
+            return # cancel movement
         
-        # update action
+        self.invun = False
         self.action = 'run'
 
         # update velocity and direction
@@ -85,59 +84,56 @@ class Player(sprites.Sprite):
             return
         self.action = 'idle'
 
-    def hit(self):
-        self.damaged = True
-        self.damage_alpha = chain(DAMAGE_ALPHA * 4)
+
+    def hit(self, dmg, dir):
+        if not self.invun:
+            print("Player HP -{0}".format(dmg))
+            self.health = self.health - dmg
+            self.vel = vec(PLAYER_HIT_KNOCKBACK, 0).rotate(-dir)
+            self.action = 'hit'
+            self.actions[self.action].iter()
+            self.game.sounds['player_hit'].play()
+            sprites.Damage(self.game, (self.pos.x, self.pos.y - 50), dmg, RED)
+            self.invun = True
 
     def attack(self):
         self.action = 'attack'
         self.actions[self.action].iter()
-        self.damage = PLAYER_BASE_ATK + randint(0, PLAYER_LUCK)
+        if self.uber:
+            self.damage = PLAYER_BASE_ATK * PLAYER_UBER_MULTIPLIER 
+            self.force = PLAYER_FORCE * int(PLAYER_UBER_MULTIPLIER/2)
+        else:
+            self.damage = PLAYER_BASE_ATK + randint(0, PLAYER_LUCK)
+            self.force = PLAYER_FORCE
         if self.facing == 'right':
             self.strike_pos = (self.pos.x + 40, self.pos.y + 40)
         else:
             self.strike_pos = (self.pos.x - 40, self.pos.y + 40)
         self.game.FT_SWORDSTRIKE_1 = 14
         self.game.FT_SWORDSTRIKE_2 = 37
+        self.invun = True
 
 
     def pick_up_sword(self):
         print("found sword")
+        self.uber = True
+        self.invun = True
         self.action = 'sword'
         self.actions[self.action].iter()
-        
-
-    #def get_colorkey_hitmask(self, image, rect, key=None):
-    #    """returns a hitmask using an image's colorkey.
-    #    image->pygame Surface,
-    #    rect->pygame Rect that fits image,
-    #    key->an over-ride color, if not None will be used instead of the image's colorkey"""
-    #    if key==None:colorkey=image.get_colorkey()
-    #    else:colorkey=key
-    #    mask=[]
-    #    for x in range(rect.width):
-    #        mask.append([])
-    #        for y in range(rect.height):
-    #            mask[x].append(not image.get_at((x,y)) == colorkey)
-    #    return mask
+        self.game.sounds['found_sword'].play()
 
     def update(self):
         """ update is called once every loop before drawing to enact any outstanding changes to the player object"""
-
-        # flash if player has been hit
-        if self.damaged:
-            try:
-                val = next(self.damage_alpha)
-                self.image.fill((255, 0, 0, val), special_flags=pygame.BLEND_RGBA_MULT)
-            except:
-                self.damaged = False
         
         # update the player image to next in animation
         try:
             self.image = self.actions[self.action].next()
         except StopIteration as err:
-            if self.action in ['attack','sword']:
+            if self.action in ['attack','sword', 'hit']:
+                if self.action == 'hit':
+                    self.vel = vec(0, 0)
                 self.action = 'idle'
+                self.invun = False
             else:
                 raise err
 
@@ -151,9 +147,11 @@ class Player(sprites.Sprite):
         self.pos += self.vel * self.game.dt
 
         # now that the sprite has been moved, test for collisions and correct
-        self.refresh_hitbox(offset=self.hit_rect_offset)
+        self.refresh_rect(offset=self.hit_rect_offset)
+        self.refresh_poly()
         self.correct_wall_collision()
         self.correct_offmap(self)
-        self.refresh_hitbox(offset=self.hit_rect_offset)
+        self.refresh_rect(offset=self.hit_rect_offset)
+        self.refresh_poly()
 
         #self.mask = pygame.mask.from_surface(self.image)

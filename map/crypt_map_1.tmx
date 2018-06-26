@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="8" height="14" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="52">
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="8" height="14" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="54">
  <tileset firstgid="1" source="kenney-dungeon-tileset.tsx"/>
  <layer name="background" width="8" height="14">
   <data encoding="csv">
@@ -57,7 +57,6 @@
  </layer>
  <objectgroup name="Object Layer 1">
   <object id="5" name="spawn" x="1782.34" y="216.664" width="39.3281" height="34.6719"/>
-  <object id="25" name="sword" x="1766.34" y="703.664" width="39.3281" height="34.6719"/>
   <object id="28" name="wall" x="908" y="428">
    <polygon points="0,0 32,-18 -650,-420 -648,-384"/>
   </object>
@@ -92,7 +91,6 @@
    <polygon points="0,0 213,-117 154,-169 -12,-99 -47,-36"/>
   </object>
   <object id="44" name="player" x="219" y="869" width="56" height="54"/>
-  <object id="45" name="fp" x="581" y="102" width="24" height="25"/>
   <object id="46" name="wall" x="1883" y="140">
    <polygon points="0,0 -252,-143 -225,-161 30,-12"/>
   </object>
@@ -100,5 +98,7 @@
    <polygon points="0,0 144,90 180,68 17,-19"/>
   </object>
   <object id="51" name="exit" x="1938" y="98" width="56" height="118"/>
+  <object id="52" name="spawn" x="1074.34" y="148.664" width="39.3281" height="34.6719"/>
+  <object id="53" name="spawn" x="888.336" y="549.664" width="39.3281" height="34.6719"/>
  </objectgroup>
 </map>

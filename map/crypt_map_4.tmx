@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.0.3" orientation="staggered" renderorder="right-down" width="4" height="8" tilewidth="256" tileheight="149" staggeraxis="y" staggerindex="odd" nextobjectid="79">
+ <tileset firstgid="1" source="kenney-dungeon-tileset.tsx"/>
+ <layer name="background" width="4" height="8">
+  <data encoding="csv">
+66,66,66,66,
+82,66,66,66,
+66,66,66,66,
+66,107,66,66,
+66,66,66,66,
+66,66,106,66,
+66,66,66,66,
+66,66,66,66
+</data>
+ </layer>
+ <layer name="midground" width="4" height="8">
+  <data encoding="csv">
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0,
+0,0,0,0
+</data>
+ </layer>
+ <layer name="foreground" width="4" height="8">
+  <data encoding="csv">
+5,178,0,9,
+0,178,0,0,
+0,0,178,0,
+0,0,174,0,
+150,0,0,178,
+170,0,0,178,
+0,190,0,0,
+0,150,4,0
+</data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object id="69" name="fp" x="602" y="224.5" width="78" height="73"/>
+  <object id="73" name="player" x="189" y="483.5" width="78" height="73"/>
+  <object id="74" name="wall" x="612" y="590">
+   <polygon points="0,0 -308,-180 -288,-194 32,-18"/>
+  </object>
+  <object id="76" name="wall" x="1124" y="434">
+   <polygon points="0,0 -284,-158 -252,-176 32,-14"/>
+  </object>
+  <object id="77" name="wall" x="750" y="226">
+   <polygon points="0,0 -398,-230 -362,-246 36,-22"/>
+  </object>
+  <object id="78" name="wall" x="210" y="399">
+   <polygon points="0,0 60,-9 86,-23 -116,-160 -115,-108 -2,-36"/>
+  </object>
+ </objectgroup>
+</map>

@@ -2,9 +2,7 @@ import pygame
 import sys
 from os import path
 from random import choice,random
-from hbf import sprites, player, enemy, mob, npc, environment
-#from hbf import environment
-#from hbf import input
+from hbf import sprites, player, enemy, mob, environment, animation
 from pygame.locals import * 
 from settings import *
 
@@ -18,13 +16,13 @@ class Game:
         pygame.key.set_repeat(1, 1) # setup repeat keys (delay, repeat)
         
         display_info = pygame.display.Info() # initialize display
-        self.window_width = 1200 #display_info.current_w
-        self.window_height = 800 #display_info.current_h
+        self.window_width = 1200
+        self.window_height = 800
         self.screen = pygame.display.set_mode((self.window_width, self.window_height)) #FULLSCREEN|HWSURFACE|DOUBLEBUF)
         
         self.clock = pygame.time.Clock()
         self.draw_debug = DEBUG 
-        self.level = 0
+        self.current_level = START_LEVEL
         self.exit = False
         self.temp = 0
 
@@ -34,30 +32,6 @@ class Game:
 
         # loading files
         self.load_data()
-
-    def draw_text(self, text, font_name, size, color, x, y, align="nw"):
-        font = pygame.font.Font(font_name, size)
-        text_surface = font.render(text, True, color)
-        text_rect = text_surface.get_rect()
-        if align == "nw":
-            text_rect.topleft = (x, y)
-        if align == "ne":
-            text_rect.topright = (x, y)
-        if align == "sw":
-            text_rect.bottomleft = (x, y)
-        if align == "se":
-            text_rect.bottomright = (x, y)
-        if align == "n":
-            text_rect.midtop = (x, y)
-        if align == "s":
-            text_rect.midbottom = (x, y)
-        if align == "e":
-            text_rect.midright = (x, y)
-        if align == "w":
-            text_rect.midleft = (x, y)
-        if align == "center":
-            text_rect.center = (x, y)
-        self.screen.blit(text_surface, text_rect)
 
     def load_data(self):
 
@@ -77,31 +51,14 @@ class Game:
 
         # font
         self.font = os.path.join(self.img_dir, FONT)
-        self.draw_text("Adventure Time", self.font, 90, RED, self.window_width / 2, 200, align="n")
-        self.draw_text("Rescue FP!", self.font, 70, RED, self.window_width / 2, self.window_height / 2, align="center")
+        animation.draw_text(self.screen, "Adventure Time", self.font, 100, RED, self.window_width / 2, 200, align="n")
+        animation.draw_text(self.screen, "Rescue Flame Princess", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
         pygame.display.update()
 
-        # load sprite sheet images
-        self.spritesheets = {}
-        
+        # images
         self.images = {}
-        self.images['finn_and_jake_sword_combo'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_sword_combo.png"))
-        self.images['finn_and_jake_idle'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_idle.png"))
-        self.images['finn_and_jake_run'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_run.png"))
-        self.images['flame_princess_npc'] = pygame.image.load(os.path.join(self.img_dir, "flame_princess_npc.png"))
-        self.images['finn_and_jake_found_sword_1'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_1.png"))
-        self.images['finn_and_jake_found_sword_2'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_2.png"))
-        self.images['finn_and_jake_found_sword_3'] = pygame.image.load(os.path.join(self.img_dir, "finn_and_jake_found_sword_3.png"))
-
-        #for k in self.images.keys():
-        #    self.images[k] = pygame.transform.scale(self.images[k], (self.images[k].get_width()*2, self.images[k].get_height()*2))
-        
-        self.player_ss_img = pygame.image.load(os.path.join(self.img_dir, PLAYER_SPRITESHEET))
-        self.player_ss_img = pygame.transform.scale(self.player_ss_img, (self.player_ss_img.get_width()*2, self.player_ss_img.get_height()*2))
-
-        self.spritesheets['rumo'] = pygame.image.load(os.path.join(self.img_dir, "rumo.png"))
-        self.spritesheets['homun'] = pygame.image.load(os.path.join(self.img_dir, "homun.png"))
-        self.spritesheets['homunculus'] = pygame.image.load(os.path.join(self.img_dir, "homunculus.png"))
+        for k,v in IMAGES_TO_LOAD.items():
+            self.images[k] = pygame.image.load(os.path.join(self.img_dir, v))
 
         # lighting effects
         self.fog = pygame.Surface((self.window_width, self.window_height))
@@ -109,130 +66,82 @@ class Game:
         self.light_mask = pygame.image.load(os.path.join(self.img_dir, LIGHT_MASK)).convert_alpha()
         self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
         self.light_rect = self.light_mask.get_rect()
-
-
-
-        
-        
-
-
-
-        
-        self.splat_image = pygame.image.load(os.path.join(self.img_dir, 'splat red.png'))
-        self.splat_image = pygame.transform.scale(self.splat_image, (64, 64))
-
-
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
-        
 
-        self.item_images = {}
-        for item in ITEM_IMAGES:
-            self.item_images[item] = pygame.image.load(os.path.join(self.img_dir, ITEM_IMAGES[item]))
-
-        # load music
+        # load music & sounds
         pygame.mixer.music.load(os.path.join(self.snd_dir, BG_MUSIC))
-
-        # load game sounds
-        self.effects_sounds = {}
-        for type in GAME_SOUNDS:
-            self.effects_sounds[type] = pygame.mixer.Sound(os.path.join(self.snd_dir, GAME_SOUNDS[type]))
-
-        # load weapon sounds
-        self.weapon_sounds = {}
-        for weapon in WEAPON_SOUNDS:
-            self.weapon_sounds[weapon] = []
-            for snd in WEAPON_SOUNDS[weapon]:
-                s = pygame.mixer.Sound(os.path.join(self.snd_dir, snd))
-                s.set_volume(0.2)
-                self.weapon_sounds[weapon].append(s)
-
-        #self.weapon_sounds['gun'] = []
-        #for snd in GUN_SOUND:
-        #    
-        #    s.set_volume(0.5)
-        #    self.weapon_sounds['gun'].append(s)
-
-        # load play hit sounds - should this be in the playerclass?
-        self.player_hit_sounds = []
-        for snd in PLAYER_HIT_SOUND:
-            self.player_hit_sounds.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
-
-        # load ???
-        self.mob_hit_sounds = []
-        for snd in MOB_HIT_SOUND:
-            self.mob_hit_sounds.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
+        self.sounds = {}
+        for k,v in SOUNDS.items():
+            self.sounds[k] = pygame.mixer.Sound(os.path.join(self.snd_dir, v))
+        #self.effects_sounds = {}
+        #for type in GAME_SOUNDS:
+        #    self.effects_sounds[type] = pygame.mixer.Sound(os.path.join(self.snd_dir, GAME_SOUNDS[type]))
+#
+        #self.player_hit_sounds = []
+        #for snd in PLAYER_HIT_SOUND:
+        #    self.player_hit_sounds.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
+#
+        #self.ENEMY_HIT_SOUNDs = []
+        #for snd in ENEMY_HIT_SOUND:
+        #    self.ENEMY_HIT_SOUNDs.append(pygame.mixer.Sound(os.path.join(self.snd_dir, snd)))
    
     def new(self):
-        
-        self.paused = False
-        self.night = False
-        self.dungeon = False
-
-        if self.level == 2:
-            self.dungeon = True
-            self.night = True
+        """ Starts a new level """
+        # level properties
+        level_info = LEVELS[self.current_level]
+        self.night = level_info['night']
+        self.dungeon = level_info['dungeon']
+        if self.dungeon:
             self.text_ttl = 300 #frames, not seconds
 
-        self.map = environment.IsoTileMap(os.path.join(self.map_dir, MAPS[self.level]))
-        self.map.make_map(['background','midground'])
-        self.map_foreground = environment.IsoTileMap(os.path.join(self.map_dir, MAPS[self.level]))
-        self.map_foreground.make_map(['foreground'], True)
+        # map, camera & hud
+        self.map = environment.IsoTileMap(os.path.join(self.map_dir, level_info['map_file']))
+        self.map.make()
         self.camera = environment.Camera(self.map, self.window_width, self.window_height)
 
-        # Define sprites
+        # define sprites groups
         self.all_sprites            = pygame.sprite.LayeredUpdates()
         self.wall_sprites           = pygame.sprite.Group()
         self.nearby_wall_sprites    = pygame.sprite.Group()
         self.mob_sprites            = pygame.sprite.Group()
-        self.bullet_sprites         = pygame.sprite.Group()
         self.sword_sprites          = pygame.sprite.Group()
         self.item_sprites           = pygame.sprite.Group()
-        self.hidden_sprites         = pygame.sprite.Group()
         self.damage_sprites         = pygame.sprite.Group()
         self.exit_sprites           = pygame.sprite.Group()
+        self.npc_sprites            = pygame.sprite.Group()
 
         # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
             if tile_object.name == 'player':
                 self.player = player.Player(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'fp':
-                npc.FlamePrincess(self, vec(tile_object.x , tile_object.y))
+                sprites.FlamePrincess(self, vec(tile_object.x , tile_object.y))
             if tile_object.name == 'wall':
                 sprites.ObstaclePoly(self, vec(tile_object.x, tile_object.y), tile_object.points)
-            if tile_object.name == 'rumo':
-                enemy.Rumo(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name == 'homunculus':
-                enemy.Homunculus(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name == 'homun':
-                enemy.Homun(self, vec(tile_object.x, tile_object.y))
-            if tile_object.name in ['health', 'shotgun','pistol','chainsaw','sword']:
+            if tile_object.name in ['health','sword']:
                 sprites.Item(self, vec(tile_object.x, tile_object.y), tile_object.name)
             if tile_object.name == 'exit':
                 sprites.LevelExit(self, vec(tile_object.x, tile_object.y))
 
+        # spawn enemy mobs
         self.spawn_points = [obj for obj in self.map.tmxdata.objects if obj.name == 'spawn']
-        
+        self.mob = mob.Mob(self, level_info['enemy_total'], level_info['enemy_onscreen'])
+
+        # hud and level start sound
         self.hud = environment.Hud(self.player, 10, 10)
-            
-        self.effects_sounds['level_start'].play()
-
-        self.current_mob = mob.Mob(self, 3)
-
 
 
     def run(self):
-        # Game loop
+        """ Main game loop consisting of events, update & draw """
         self.running = True
-        pygame.mixer.music.play(loops = 1)
-
-        #self.input_manager = input.InputManager()
+        self.paused = False
+        pygame.mixer.music.play(loops = 0)
         
         while self.running:
             # clock.tick delays loop enough to stay at the correct FPS
             # dt is how long the previous frame took in seconds, this is used to produce smooth movement independant of frame rate
             self.dt = self.clock.tick(FPS) / 1000
-            #print(self.clock.tick(FPS)/1000)
             self.events()
             if not self.paused:
                 self.update()
@@ -243,9 +152,7 @@ class Game:
             self.show_gameover_screen()
 
     def events(self):
-        """
-        game loop events
-        """
+        """ Handles all in game events"""
 
         # first check to see what keys are pressed down to track movement
         keys = pygame.key.get_pressed()
@@ -284,15 +191,16 @@ class Game:
             self.FT_SWORDSTRIKE_1 -= 1
         elif self.FT_SWORDSTRIKE_1 == 0:
             self.FT_SWORDSTRIKE_1 = -1
-            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage)
+            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage, self.player.force)
         if self.FT_SWORDSTRIKE_2 > 0:
             self.FT_SWORDSTRIKE_2 -= 1
         elif self.FT_SWORDSTRIKE_2 == 0:
             self.FT_SWORDSTRIKE_2 = -1
-            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage)
+            sprites.SwordStrike(self, self.player.strike_pos, self.player.damage, self.player.force)
             
 
     def update(self):
+        """Handles updating all elements of the game accordingly"""
         # call the update method on all sprites
         self.polytests = 0
         self.all_sprites.update()
@@ -304,49 +212,49 @@ class Game:
         # player hits level exit
         hit = pygame.sprite.spritecollide(self.player, self.exit_sprites, False, sprites.Sprite.collide_hitrect)
         if hit:
-            self.draw_text("Loading", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
+            if self.dungeon and len(self.mob.enemies) != 0:
+                pass # player has to clear dungeon to proceed
+            else:
+                animation.draw_text(self.screen, "Loading", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
+                pygame.display.update()
+                self.current_level += 1
+                self.new()
+
+        # player hits fp
+        hit = pygame.sprite.spritecollide(self.player, self.npc_sprites, False, sprites.Sprite.collide_hitrect)
+        if hit:
+            self.current_level = 0
+            animation.draw_text(self.screen, "mathematical", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
             pygame.display.update()
-            self.level += 1
-            self.new()
+            pygame.time.wait(8000)
+            self.running = False
 
         # player hits items
         hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False)
         for hit in hits:
             if hit.type == 'health' and self.player.health < PLAYER_HEALTH:
                 hit.kill()
-                self.effects_sounds['health_up'].play()
+                self.sounds['health_up'].play()
                 self.player.health = PLAYER_HEALTH
             if hit.type == 'sword':
                 hit.kill()
-                #self.effects_sounds['gun_pickup'].play()
                 self.player.pick_up_sword()
-            #if hit.type == 'pistol':
-            #    hit.kill()
-            #    self.effects_sounds['gun_pickup'].play()
-            #    self.player.weapon = 'pistol'
-            #if hit.type == 'chainsaw':
-            #    hit.kill()
-            #    self.effects_sounds['gun_pickup'].play()
-            #    self.player.weapon = 'chainsaw'
 
-        # mobs hit player
+
+        # enemy hit player
         hits = pygame.sprite.spritecollide(self.player, self.mob_sprites, False, sprites.Sprite.collide_hitrect)
-        for hit in hits:
-            # randomly play hit sound
-            if random() < 0.7: 
-                choice(self.player_hit_sounds).play()
-            self.player.health -= MOB_DAMAGE
-            hit.vel = vec(0, 0)
+        if hits:
+            self.player.hit(hits[0].atk, hits[0].rot)
             if self.player.health <= 0:
                 self.running = False
-        if hits:
-            self.player.hit()
-            self.player.pos += vec(MOB_KNOCKBACK, 0).rotate(-hits[0].rot)
 
         # sword hits enemy
         hits = pygame.sprite.groupcollide(self.mob_sprites, self.sword_sprites, False, True, collided=sprites.Sprite.collide_hitrect)
         for h in hits:
-            h.hit(hits[h][0].damage) # we just use the first hit even if there are multiple
+            h.hit(hits[h][0].damage, hits[h][0].force) # we just use the first hit even if there are multiple
+
+        # update the state of the mob
+        self.mob.update()
 
   
     def draw(self):
@@ -354,22 +262,24 @@ class Game:
         Note that order is important, You must build up the image layer at a time"""
 
         # draw map basckground
-        self.screen.blit(self.map.image, self.camera.apply(self.map.rect))
+        self.screen.blit(self.map.background, self.camera.apply(self.map.rect))
 
         # draw sprites
         for sprite in self.all_sprites:
-            if isinstance(sprite, sprites.Enemy):
-                sprite.draw_health()
             if sprite.image:
                 self.screen.blit(sprite.image, self.camera.apply(sprite.rect))
+            if isinstance(sprite, enemy.Enemy):
+                width = int(sprite.rect.width  * (sprite.health / sprite.max_health))
+                health_bar = pygame.Rect(sprite.rect.x, sprite.rect.y, width, 7)
+                pygame.draw.rect(self.screen, RED, self.camera.apply(health_bar))
 
         # draw map foreground
-        self.screen.blit(self.map_foreground.image, self.camera.apply(self.map_foreground.rect))
+        self.screen.blit(self.map.foreground, self.camera.apply(self.map.rect))
 
         for sprite in self.damage_sprites:
-            sprite.draw()
+            self.screen.blit(sprite.image, sprite.rect)
 
-        #dot = pygame.C
+        # update window title with fps
         pygame.display.set_caption("Happy Battle Factor | {0:.2f}fps".format(self.clock.get_fps()))
         
         # debug 
@@ -381,39 +291,9 @@ class Game:
             ))
             for sprite in self.all_sprites:
                 sprite.draw_debug()
-
-            #pygame.draw.rect(self.screen, WHITE, self.camera.apply(self.player.rect), 2) #screen, color, rect, thickness
-            #pygame.draw.rect(self.screen, RED, self.camera.apply(self.camera.rect), 4) #screen, color, rect, thickness
-            ##pygame.draw.rect(self.screen, RED, self.camera.apply(self.player.hit_rect), 2)
-            #pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(self.player.hit_poly)).points, 2)
-            #
-            #if self.player.atk_rect:
-            #    pygame.draw.rect(self.screen, RED, self.player.atk_rect, 3)
-            ##olist = self.player.mask.outline()
-            ##tmpsurf = pygame.Surface((self.player.rect.width, self.player.rect.height))
-            ##pygame.draw.polygon(tmpsurf, RED, olist, 0)
-            ##self.screen.blit(tmpsurf, self.camera.apply(self.player.rect))
-#
-            #for sprite in self.all_sprites:
-            #    pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 1)
-            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 1)
-            #for sprite in self.hidden_sprites:
-            #    pygame.draw.rect(self.screen, BLACK, self.camera.apply(sprite.rect), 1)
-            #for sprite in self.mob_sprites:
-            #    #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.rect), 2)
-            #    #pygame.draw.rect(self.screen, WHITE, self.camera.apply(sprite.image.get_rect()), 2)
-            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.hit_rect), 2)
-            #    #pygame.draw.line(self.screen, RED, sprite.pos, (sprite.pos + sprite.vel * 20)) # target line
-            #for sprite in self.wall_sprites:
-            #    pygame.draw.polygon(self.screen, CYAN, (self.camera.apply_poly(sprite.hit_poly)).points, 2)
-            #    #pygame.draw.rect(self.screen, CYAN, self.camera.apply(sprite.rect), 2)
-            #    #pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
-            #for sprite in self.bullet_sprites:
-            #    pygame.draw.rect(self.screen, RED, self.camera.apply(sprite.rect), 2)
         
         if self.night:
             self.render_fog()
-        
         
         # draw the HUD
         pygame.draw.rect(self.screen, self.hud.hbar_fill_col, self.hud.hbar_fill)
@@ -422,11 +302,11 @@ class Game:
         if self.dungeon:
             if self.text_ttl > 0:
                 self.text_ttl -= 1
-                self.draw_text("Survive", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
+                animation.draw_text(self.screen, "Survive", self.font, 60, RED, self.window_width / 2, self.window_height / 2, align="center")
 
         if self.paused:
             self.screen.blit(self.dim_screen, (0,0))
-            self.draw_text("Paused", self.font, 105, RED, self.window_width / 2, self.window_height / 2, align="center")
+            animation.draw_text(self.screen, "Paused", self.font, 105, RED, self.window_width / 2, self.window_height / 2, align="center")
 
         # update the screen
         pygame.display.update()
@@ -438,15 +318,10 @@ class Game:
         self.fog.blit(self.light_mask, self.light_rect)
         self.screen.blit(self.fog, (0,0), special_flags=pygame.BLEND_MULT)
 
-
-
-    def show_start_screen(self):
-        pass
-
     def show_gameover_screen(self):
         self.screen.fill(BLACK)
-        self.draw_text("GAME OVER", self.font, 100, RED, self.window_width/2, self.window_height/2, align="center")
-        self.draw_text("press a key to restart", self.font, 50, WHITE, self.window_width/2, self.window_height * 3/4, align="center")
+        animation.draw_text(self.screen, "GAME OVER", self.font, 100, RED, self.window_width/2, self.window_height/2, align="center")
+        animation.draw_text(self.screen, "press a key to restart", self.font, 50, WHITE, self.window_width/2, self.window_height * 3/4, align="center")
         pygame.display.flip()
         self.wait_for_key()
 

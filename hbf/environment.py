@@ -52,8 +52,7 @@ class IsoTileMap(object):
         self.tmxdata = load_pygame(filename, pixelalpha = True)
         self.width = self.tmxdata.width * self.tmxdata.tilewidth
         self.height = self.tmxdata.height * self.tmxdata.tileheight / 2  #- MAP_CLIPPING['bottom']# halved becuase of staggering
-        self.image = None # these get define when draw_map() is called
-        self.rect = None
+        self.rect = pygame.Rect(0, 0, self.width, self.height)
 
     def _render(self, surface, layers):
         layer_no = 0
@@ -78,18 +77,25 @@ class IsoTileMap(object):
 
             layer_no = layer_no + 1
 
-    def make_map(self, layers, alpha=False):
+    def make(self):
         """Render the map into an image that can be draw to screen
         You can specify which layers are used to make the map and is alpha is to be used"""
-        if alpha:
-            temp_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        else:
-            temp_surface = pygame.Surface((self.width, self.height))
+        self.background = pygame.Surface((self.width, self.height))
+        self._render(self.background, ['background', 'midground'])
+
+        
+        self.foreground = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self._render(self.foreground, ['foreground'])
+
+        #if alpha:
+        #    temp_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        #else:
+        #    temp_surface = pygame.Surface((self.width, self.height))
             
         #temp_surface.set_colorkey(BLACK, pygame.RLEACCEL)
-        self._render(temp_surface, layers)
-        self.image = temp_surface
-        self.rect = temp_surface.get_rect()
+        #self._render(temp_surface, layers)
+        #self.image = temp_surface
+        #self.rect = temp_surface.get_rect()
         #return temp_surface
 
 

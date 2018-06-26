@@ -8,18 +8,24 @@ class Mob():
     """
     Groups of enemy sprites that can be spawned in waves continuously
     """
-    def __init__(self, game, count):
+    def __init__(self, game, count, onscreen):
         self.game = game
         self.count = count
-        self.alive = True
+        self.onscreen = onscreen
+        self.spawned = 0
         self.enemies = []
         self.spawn_radius = 30
 
-        for c in range(0, count):
-            self.spawn()
+    def remove(self, sprite):
+        self.enemies.remove(sprite)
+        self.count -= 1
+        print("{} enemies left in mob".format(self.count))
 
     def update(self):
-        pass
+        if self.spawned < self.count:
+            # spawn more enemies if possible
+            if len(self.enemies) < self.onscreen:
+                self.spawn()
 
     def spawn(self):
         """
@@ -39,8 +45,9 @@ class Mob():
             if len(overlaps) == 0:
                 print("enemy spawned: " + enemy_name)
                 self.enemies.append(new_enemy)
+                self.spawned += 1
                 placed = True
-            
+
 
 
 
