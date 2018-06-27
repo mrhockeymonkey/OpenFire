@@ -99,11 +99,11 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class Damage(Sprite):
-    def __init__(self, game, pos, val,col):
+    def __init__(self, game, pos, val, col):
         self.groups = game.all_sprites, game.damage_sprites
         self.layer = BULLET_LAYER
         size = 30
-        image = pygame.font.Font(None, size).render(str(val), True, col)
+        image = pygame.font.SysFont('Sans', size).render(str(val), True, col)
         Sprite.__init__(self, game, pos, image)
         self.vel = vec(10, -30)
         self.spawn_time = pygame.time.get_ticks()
@@ -171,18 +171,21 @@ class SwordStrike(Sprite):
 
 class Item(Sprite):
     def __init__(self, game, pos, type):
-        self.groups = game.all_sprites, game.item_sprites
+        self.groups = game.all_sprites, game.item_sprites, game.lit_sprites
         self.layer = ITEMS_LAYER
         Sprite.__init__(self, game, pos, game.images[type]) # inherit from Sprite
         self.type = type
         self.hit_rect = ITEM_HIT_RECT.copy()
         self.animation = 'rise'
         self.step = 0
+        self.light_mask = self.game.light_mask.copy()
+        self.light_rect = self.light_mask.get_rect()
 
     def update(self):
         # bobbing motion - this is split into two phases: rise & bounce
         animation.rise_and_bounce(self, ITEM_BOB_RANGE, ITEM_BOB_SPEED)
-        self.refresh_rect()
+        self.hit_rect.center = self.pos
+        self.light_rect.center = self.rect.center
 
 class FlamePrincess(Sprite):
     def __init__(self, game, pos):

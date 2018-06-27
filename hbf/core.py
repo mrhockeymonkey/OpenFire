@@ -65,7 +65,7 @@ class Game:
         self.fog.fill(NIGHT_COLOR)
         self.light_mask = pygame.image.load(os.path.join(self.img_dir, LIGHT_MASK)).convert_alpha()
         self.light_mask = pygame.transform.scale(self.light_mask, LIGHT_RADIUS)
-        self.light_rect = self.light_mask.get_rect()
+        #self.light_rect = self.light_mask.get_rect()
         self.dim_screen = pygame.Surface(self.screen.get_size()).convert_alpha()
         self.dim_screen.fill((0, 0, 0, 180))
 
@@ -100,6 +100,7 @@ class Game:
         self.damage_sprites         = pygame.sprite.Group()
         self.exit_sprites           = pygame.sprite.Group()
         self.npc_sprites            = pygame.sprite.Group()
+        self.lit_sprites            = pygame.sprite.Group()
 
         # create sprites based on the object layer from map
         for tile_object in self.map.tmxdata.objects:
@@ -220,7 +221,7 @@ class Game:
             self.running = False
 
         # player hits items
-        hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False)
+        hits = pygame.sprite.spritecollide(self.player,self.item_sprites, False, sprites.Sprite.collide_hitrect)
         for hit in hits:
             if hit.type == 'health' and self.player.health < PLAYER_HEALTH:
                 hit.kill()
@@ -266,15 +267,11 @@ class Game:
         # draw map foreground
         self.screen.blit(self.map.foreground, self.camera.apply(self.map.rect))
 
-        for sprite in self.damage_sprites:
-            self.screen.blit(sprite.image, sprite.rect)
-
         # update window title with fps
         pygame.display.set_caption("Happy Battle Factor | {0:.2f}fps".format(self.clock.get_fps()))
         
         # debug 
         if self.draw_debug == True:
-            print("polytests: {0}".format(self.polytests))
             pygame.display.set_caption("Happy Battle Factor | {0:.2f}fps {1}".format(
                 self.clock.get_fps(), 
                 len(self.nearby_wall_sprites.sprites())
@@ -283,7 +280,11 @@ class Game:
                 sprite.draw_debug()
         
         if self.night:
-            self.render_fog()
+            # draw the light mask (gradient) onto fog image
+            self.fog.fill(NIGHT_COLOR)
+            for sprite in self.lit_sprites:
+                self.fog.blit(sprite.light_mask, self.camera.apply(sprite.light_rect))
+            self.screen.blit(self.fog, (0,0), special_flags=pygame.BLEND_MULT)
         
         # draw the HUD
         pygame.draw.rect(self.screen, self.hud.hbar_fill_col, self.hud.hbar_fill)
@@ -300,13 +301,6 @@ class Game:
 
         # update the screen
         pygame.display.update()
-
-    def render_fog(self):
-        # draw the light mask (gradient) onto fog image
-        self.fog.fill(NIGHT_COLOR)
-        self.light_rect.center = self.camera.apply(self.player.rect).center
-        self.fog.blit(self.light_mask, self.light_rect)
-        self.screen.blit(self.fog, (0,0), special_flags=pygame.BLEND_MULT)
 
     def show_gameover_screen(self):
         self.screen.fill(BLACK)

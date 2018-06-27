@@ -82,7 +82,7 @@
   <object id="67" name="spawn" x="798" y="589" width="78" height="73"/>
   <object id="68" name="spawn" x="1589" y="879.5" width="78" height="73"/>
   <object id="69" name="spawn" x="647" y="241.5" width="78" height="73"/>
-  <object id="70" name="health" x="1663" y="87.5" width="78" height="73"/>
+  <object id="70" name="health" x="1852" y="599.5" width="78" height="73"/>
   <object id="71" name="spawn" x="1401" y="453.5" width="78" height="73"/>
   <object id="72" name="sword" x="486.34" y="818.664" width="39.3281" height="34.6719"/>
  </objectgroup>

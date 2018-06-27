@@ -11,12 +11,12 @@ Credits:
 
 Debug Build (as folder and with console)
 ```
-pyinstaller .\main.py --add-data ".\img;img" --add-data ".\map;map" --add-data ".\snd;snd"
+pyinstaller .\main.py --noconfirm --add-data ".\img;img" --add-data ".\map;map" --add-data ".\snd;snd"
 ```
 
 Release Build (as single exe, windowed)
 ```
-pyinstaller .\main.py -F --add-data ".\img;img" --add-data ".\map;map" --add-data ".\snd;snd" --windowed
+pyinstaller .\main.py -F --noconfirm --add-data ".\img;img" --add-data ".\map;map" --add-data ".\snd;snd" --windowed
 ```
 
 

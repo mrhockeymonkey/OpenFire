@@ -19,7 +19,6 @@ def rise_and_bounce(object, height, speed):
             object.step = 0
             object.animation = 'rise'
 
-
 def draw_text(screen, text, font_name, size, color, x, y, align="nw"):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, color)

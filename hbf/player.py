@@ -16,7 +16,7 @@ class Player(sprites.Sprite):
     """
 
     def __init__(self, game, pos):
-        self.groups = game.all_sprites
+        self.groups = game.all_sprites, game.lit_sprites
         self.layer = PLAYER_LAYER
         self.ssheet_w = 200
         self.ssheet_h = 150
@@ -49,6 +49,8 @@ class Player(sprites.Sprite):
         self.uber = False
         self.max_health = PLAYER_HEALTH
         self.facing = 'right'
+        self.light_mask = self.game.light_mask.copy()
+        self.light_rect = self.light_mask.get_rect()
         self.actions[self.action].iter()
         self.refresh_rect(offset=self.hit_rect_offset)
         self.refresh_poly()
@@ -153,5 +155,6 @@ class Player(sprites.Sprite):
         self.correct_offmap(self)
         self.refresh_rect(offset=self.hit_rect_offset)
         self.refresh_poly()
+        self.light_rect.center = self.rect.center
 
         #self.mask = pygame.mask.from_surface(self.image)
